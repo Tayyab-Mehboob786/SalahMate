@@ -1,0 +1,3 @@
+export const SALT_ROUNDS = 10;
+export const ACCESS_TOKEN_DEFAULT_EXPIRATION = '15m';
+export const REFRESH_TOKEN_DEFAULT_EXPIRATION = '7d';
