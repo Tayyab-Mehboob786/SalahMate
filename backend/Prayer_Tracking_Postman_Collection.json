@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "SalahMate Prayer Tracking",
+    "description": "Endpoints for Phase 10.1 - Prayer Tracking Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Prayer Log",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prayer\": \"FAJR\",\n  \"status\": \"COMPLETED\",\n  \"date\": \"2026-07-31\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/prayers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "prayers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Today's Prayers",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/prayers/today",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "prayers",
+            "today"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Prayer History",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/prayers/history?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "prayers",
+            "history"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Prayer Status",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"MISSED\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/prayers/:id",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "prayers",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "<prayer-uuid>"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Prayer Log",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/prayers/:id",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "prayers",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "<prayer-uuid>"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

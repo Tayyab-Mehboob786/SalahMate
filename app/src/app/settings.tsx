@@ -59,7 +59,7 @@ export default function SettingsScreen() {
                   Active Location
                 </Text>
                 <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  {location.city}, {location.country}
+                  {location?.city || 'Unknown'}, {location?.country || ''}
                 </Text>
               </View>
             </View>

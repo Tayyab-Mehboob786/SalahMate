@@ -13,4 +13,7 @@ export const envValidationSchema = Joi.object({
   AI_API_KEY: Joi.string().required(),
   PRAYER_API_URL: Joi.string().uri().required(),
   EXPO_PUSH_PROJECT_ID: Joi.string().required(),
+  MAIL_USER: Joi.string().email().required(),
+  MAIL_PASSWORD: Joi.string().required(),
+  MAIL_FROM: Joi.string().email().required(),
 });

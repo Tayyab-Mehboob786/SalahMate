@@ -45,11 +45,11 @@ export const LeftNavigationDrawer: React.FC = () => {
   const { isOpen, closeDrawer } = useDrawer();
   const { user, logout } = useAuth();
 
-  const userName = user?.name ?? 'Tayyab';
-  const userEmail = user?.email ?? 'tayyab@salahmate.app';
+  const userName = user?.fullName || 'User';
+  const userEmail = user?.email || 'user@example.com';
   const initials = userName
     .split(' ')
-    .map((part) => part[0])
+    .map((part: string) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
@@ -182,7 +182,7 @@ export const LeftNavigationDrawer: React.FC = () => {
               styles.menuItem,
               pressed && { backgroundColor: theme.colors.surfaceVariant },
             ]}
-            onPress={() => handleNavigation('/(tabs)/profile')}
+            onPress={() => handleNavigation('/profile')}
           >
             <View style={styles.menuLeft}>
               <View style={[styles.iconBox, { backgroundColor: theme.dark ? DRAWER_ICON.darkBg : DRAWER_ICON.lightBg, borderColor: theme.dark ? DRAWER_ICON.darkBorder : DRAWER_ICON.lightBorder }]}>

@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View, Image, useWindowDimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Button, Text, useTheme, Divider } from 'react-native-paper';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay } from 'react-native-reanimated';
 import {
@@ -32,7 +32,8 @@ export default function LoginScreen() {
   const { width: screenWidth } = useWindowDimensions();
 
   // Controlled UI state
-  const [email, setEmail] = useState<string>('');
+  const params = useLocalSearchParams<{ email?: string }>();
+  const [email, setEmail] = useState<string>(params.email || '');
   const [password, setPassword] = useState<string>('');
   const [emailError, setEmailError] = useState<string>('');
   const [passwordError, setPasswordError] = useState<string>('');

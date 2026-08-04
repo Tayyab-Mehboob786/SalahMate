@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text, useTheme } from 'react-native-paper';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { usePullToRefresh } from '@/hooks';
+import { prayersApi, StreakData } from '@/api/prayers.api';
 import { useDrawer } from '@/context/DrawerContext';
 import { useLocation } from '@/context/LocationContext';
 import {
@@ -59,22 +60,43 @@ const QUICK_ACCESS_MODULES: readonly QuickAccessModule[] = [
   { title: 'Asma', icon: 'star-crescent', route: '/asma-ul-husna' },
 ];
 
+// ... existing imports
+import { useSharedPrayerTimes } from '@/context';
+
+// ...
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { openDrawer } = useDrawer();
-  const { location } = useLocation();
+  const { location, isDetecting, error: locationError } = useLocation();
   const theme = useTheme<SalahMateTheme>();
   const [isAiChatVisible, setIsAiChatVisible] = useState(false);
   const [isSpiritualInsightsVisible, setIsSpiritualInsightsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [streakData, setStreakData] = useState<StreakData | null>(null);
+  
+  const { data: prayerTimesData, isLoading: isPrayerTimesLoading, isError: isPrayerTimesError, getNextPrayer } = useSharedPrayerTimes();
+  
   const { refreshControl } = usePullToRefresh();
 
-  useEffect(() => {
-    // Simulate initial data fetching
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
+  // ... (keep the rest the same until JSX)
+  const loadData = useCallback(async () => {
+    try {
+      const data = await prayersApi.getStreak();
+      setStreakData(data);
+    } catch (error) {
+      console.error('Failed to load streak data for dashboard:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handleOpenChat = () => {
     setIsSpiritualInsightsVisible(false);
@@ -125,7 +147,7 @@ export default function DashboardScreen() {
     opacity: withTiming(hasScrolled ? 0 : 1, { duration: 300 }),
   }));
 
-  const userName = user?.name ?? 'Tayyab';
+  const userName = user?.fullName || 'User';
   const firstName = userName.split(' ')[0];
 
   const gregorianDateStr = new Date().toLocaleDateString('en-GB', {
@@ -134,6 +156,38 @@ export default function DashboardScreen() {
     month: 'long',
     year: 'numeric',
   });
+
+  const nextPrayer = getNextPrayer();
+  const nextPrayerName = nextPrayer?.name || '--';
+  const nextPrayerTime = nextPrayer?.time || '--:--';
+  
+  const getPrayerTime = (name: string) => {
+    if (isPrayerTimesError || !prayerTimesData) return '--:--';
+    switch (name) {
+      case 'Fajr': return prayerTimesData.timings.fajr;
+      case 'Dhuhr': return prayerTimesData.timings.dhuhr;
+      case 'Asr': return prayerTimesData.timings.asr;
+      case 'Maghrib': return prayerTimesData.timings.maghrib;
+      case 'Isha': return prayerTimesData.timings.isha;
+      default: return '--:--';
+    }
+  };
+
+  const renderLocationText = () => {
+    if (isDetecting && !location) {
+      return 'Updating your location...';
+    }
+    if (locationError && !location) {
+      return 'Location permission required.';
+    }
+    if (isDetecting && location) {
+      return `Refreshing location... (${location.city})`;
+    }
+    if (locationError && location) {
+      return `Using last known: ${location.city}`;
+    }
+    return location ? `${location.city}, ${location.country}` : 'Unknown Location';
+  };
 
   return (
     <View style={[styles.mainWrapper, { backgroundColor: theme.colors.background }]}>
@@ -165,12 +219,12 @@ export default function DashboardScreen() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                20 Muharram 1447 AH
+                {prayerTimesData?.hijriDate || '--'}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                 <AppIcon name="map-marker" size={12} variant="error" style={{ marginRight: 2 }} />
                 <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}>
-                  {location.city}, {location.country}
+                  {renderLocationText()}
                 </Text>
               </View>
             </View>
@@ -190,7 +244,7 @@ export default function DashboardScreen() {
           }
         />
 
-        {isLoading ? (
+        {isLoading || isPrayerTimesLoading ? (
           <HomeSkeleton />
         ) : (
           <View style={styles.content}>
@@ -209,7 +263,7 @@ export default function DashboardScreen() {
             </GlassCard>
 
             {/* 4. Daily Summary Card (Streak + Next Prayer) */}
-            <DailySummaryCard streak={18} nextPrayerName="Asr" nextPrayerTime="2:35 PM" />
+            <DailySummaryCard streak={streakData?.currentStreak || 0} nextPrayerName={nextPrayerName} nextPrayerTime={nextPrayerTime} />
 
             {/* 5. Current Goal */}
             <DashboardGoalWidget />
@@ -221,14 +275,18 @@ export default function DashboardScreen() {
               </Text>
             </View>
             <View style={styles.prayerRow}>
-              {MINI_PRAYERS.map((prayer) => (
+              {MINI_PRAYERS.map((prayer) => {
+                const isActive = prayer.name === nextPrayerName;
+                const liveTime = getPrayerTime(prayer.name);
+                return (
+
                 <GlassCard
                   key={prayer.name}
                   borderRadius={12}
                   onPress={() => router.push('/tracking')}
                   style={[
                     styles.compactPrayerCard,
-                    prayer.active && { borderColor: theme.colors.primary, borderWidth: 1 },
+                    isActive && { borderColor: theme.colors.primary, borderWidth: 1 },
                   ]}
                   contentStyle={styles.compactPrayerContent}
                 >
@@ -236,30 +294,34 @@ export default function DashboardScreen() {
                     name={prayer.icon as any}
                     size={18}
                     color={
-                      prayer.done ? theme.colors.iconPrimary : prayer.active ? theme.colors.iconAchievement : theme.colors.iconSecondary
+                      prayer.done ? theme.colors.iconPrimary : isActive ? theme.colors.iconAchievement : theme.colors.iconSecondary
                     }
                   />
                   <Text
                     variant="labelSmall"
                     style={[
                       styles.compactPrayerName,
-                      { color: theme.colors.onSurface, fontWeight: prayer.active ? '700' : '600' },
+                      { color: theme.colors.onSurface, fontWeight: isActive ? '700' : '600' },
                     ]}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                   >
                     {prayer.name}
                   </Text>
+                  <Text style={{ fontSize: 9, color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+                    {liveTime}
+                  </Text>
                   <AppIcon
-                    name={prayer.done ? 'check-circle' : prayer.active ? 'clock-outline' : 'circle-outline'}
+                    name={prayer.done ? 'check-circle' : isActive ? 'clock-outline' : 'circle-outline'}
                     size={12}
                     style={{ marginTop: 2 }}
                     color={
-                      prayer.done ? theme.colors.iconPrimary : prayer.active ? theme.colors.iconAchievement : theme.colors.iconInactive
+                      prayer.done ? theme.colors.iconPrimary : isActive ? theme.colors.iconAchievement : theme.colors.iconInactive
                     }
                   />
                 </GlassCard>
-              ))}
+                );
+              })}
             </View>
 
             {/* 7. Islamic Companion */}

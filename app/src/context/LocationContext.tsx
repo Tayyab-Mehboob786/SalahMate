@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import * as Location from 'expo-location';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface LocationData {
   city: string;
@@ -10,7 +10,7 @@ export interface LocationData {
 }
 
 export interface LocationContextType {
-  location: LocationData;
+  location: LocationData | null;
   isAuto: boolean;
   isDetecting: boolean;
   error: string | null;
@@ -19,49 +19,18 @@ export interface LocationContextType {
   setAutoLocation: (isAuto: boolean) => Promise<void>;
 }
 
-const LOCATION_STORAGE_KEY = 'salahmate_location_data';
+// Required keys per Phase 11.2 specs
+const LAT_KEY = 'lastLatitude';
+const LNG_KEY = 'lastLongitude';
+const UPDATED_KEY = 'lastUpdatedAt';
+
+// Additional keys for UI display
+const CITY_KEY = 'lastCity';
+const COUNTRY_KEY = 'lastCountry';
 const IS_AUTO_STORAGE_KEY = 'salahmate_is_auto_location';
 
-const DEFAULT_LOCATION: LocationData = {
-  city: 'Makkah',
-  country: 'Saudi Arabia',
-  latitude: 21.4225,
-  longitude: 39.8262,
-};
-
-// Simple storage wrapper (similar to ThemeContext)
-let storage: {
-  getString: (key: string) => string | undefined;
-  set: (key: string, value: string) => void;
-};
-
-try {
-  const mmkvModule = require('react-native-mmkv');
-  const mmkvInstance = mmkvModule.createMMKV({ id: 'salahmate-location-storage' });
-  storage = {
-    getString: (key: string) => mmkvInstance.getString(key),
-    set: (key: string, value: string) => mmkvInstance.set(key, value),
-  };
-} catch {
-  storage = {
-    getString: (key: string) => {
-      try {
-        const val = SecureStore.getItem(key);
-        return val !== null ? val : undefined;
-      } catch {
-        return undefined;
-      }
-    },
-    set: (key: string, value: string) => {
-      try {
-        SecureStore.setItemAsync(key, value).catch(() => {});
-      } catch {}
-    },
-  };
-}
-
 export const LocationContext = createContext<LocationContextType>({
-  location: DEFAULT_LOCATION,
+  location: null,
   isAuto: true,
   isDetecting: false,
   error: null,
@@ -71,24 +40,27 @@ export const LocationContext = createContext<LocationContextType>({
 });
 
 export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [location, setLocationState] = useState<LocationData>(() => {
-    const savedLocation = storage.getString(LOCATION_STORAGE_KEY);
-    return savedLocation ? JSON.parse(savedLocation) : DEFAULT_LOCATION;
-  });
-  
-  const [isAuto, setIsAutoState] = useState<boolean>(() => {
-    const savedIsAuto = storage.getString(IS_AUTO_STORAGE_KEY);
-    return savedIsAuto !== undefined ? savedIsAuto === 'true' : true;
-  });
-
-  const [isDetecting, setIsDetecting] = useState(false);
+  const [location, setLocationState] = useState<LocationData | null>(null);
+  const [isAuto, setIsAutoState] = useState<boolean>(true);
+  const [isDetecting, setIsDetecting] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const saveLocationState = useCallback((newLocation: LocationData, newIsAuto: boolean) => {
+  const saveLocationState = useCallback(async (newLocation: LocationData, newIsAuto: boolean) => {
     setLocationState(newLocation);
     setIsAutoState(newIsAuto);
-    storage.set(LOCATION_STORAGE_KEY, JSON.stringify(newLocation));
-    storage.set(IS_AUTO_STORAGE_KEY, newIsAuto ? 'true' : 'false');
+    
+    try {
+      await AsyncStorage.multiSet([
+        [LAT_KEY, newLocation.latitude.toString()],
+        [LNG_KEY, newLocation.longitude.toString()],
+        [CITY_KEY, newLocation.city],
+        [COUNTRY_KEY, newLocation.country],
+        [UPDATED_KEY, new Date().toISOString()],
+        [IS_AUTO_STORAGE_KEY, newIsAuto ? 'true' : 'false']
+      ]);
+    } catch (e) {
+      console.error('Failed to save location to AsyncStorage', e);
+    }
   }, []);
 
   const detectLocation = useCallback(async () => {
@@ -97,9 +69,9 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Permission to access location was denied. Using manual location.');
+        setError('Location permission is required to automatically determine prayer timings.');
         setIsAutoState(false);
-        storage.set(IS_AUTO_STORAGE_KEY, 'false');
+        await AsyncStorage.setItem(IS_AUTO_STORAGE_KEY, 'false');
         setIsDetecting(false);
         return;
       }
@@ -121,7 +93,16 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           latitude: currentPosition.coords.latitude,
           longitude: currentPosition.coords.longitude,
         };
-        saveLocationState(newLoc, true);
+        await saveLocationState(newLoc, true);
+      } else {
+        // Fallback without geocoding
+        const newLoc = {
+          city: 'Unknown City',
+          country: 'Unknown Country',
+          latitude: currentPosition.coords.latitude,
+          longitude: currentPosition.coords.longitude,
+        };
+        await saveLocationState(newLoc, true);
       }
     } catch (err) {
       console.error('Error detecting location:', err);
@@ -131,14 +112,53 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [saveLocationState]);
 
+  // Load from cache on mount
   useEffect(() => {
-    // Only detect on launch if it's auto and we don't have a reliable saved location 
-    // or if the user wants it to always refresh on launch. For now, we rely on the saved state 
-    // unless this is the absolute first launch.
-    const savedIsAuto = storage.getString(IS_AUTO_STORAGE_KEY);
-    if (savedIsAuto === undefined || (savedIsAuto === 'true' && !storage.getString(LOCATION_STORAGE_KEY))) {
-       detectLocation();
-    }
+    const initializeLocation = async () => {
+      try {
+        setIsDetecting(true);
+        const [latStr, lngStr, cityStr, countryStr, isAutoStr] = await Promise.all([
+          AsyncStorage.getItem(LAT_KEY),
+          AsyncStorage.getItem(LNG_KEY),
+          AsyncStorage.getItem(CITY_KEY),
+          AsyncStorage.getItem(COUNTRY_KEY),
+          AsyncStorage.getItem(IS_AUTO_STORAGE_KEY)
+        ]);
+
+        let hasCache = false;
+
+        if (latStr && lngStr) {
+          const cachedLocation = {
+            latitude: parseFloat(latStr),
+            longitude: parseFloat(lngStr),
+            city: cityStr || 'Unknown City',
+            country: countryStr || 'Unknown Country'
+          };
+          setLocationState(cachedLocation);
+          hasCache = true;
+        }
+
+        const auto = isAutoStr !== 'false';
+        setIsAutoState(auto);
+
+        if (auto) {
+          // If we have cache, we still fetch in background. If we don't, we block on it.
+          if (hasCache) {
+            setIsDetecting(false); // don't block UI
+            detectLocation(); // refresh in background
+          } else {
+            await detectLocation();
+          }
+        } else {
+          setIsDetecting(false);
+        }
+      } catch (e) {
+        console.error('Error initializing location from cache', e);
+        setIsDetecting(false);
+      }
+    };
+
+    initializeLocation();
   }, [detectLocation]);
 
   const refreshLocation = useCallback(async () => {
@@ -156,7 +176,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await detectLocation();
     } else {
       setIsAutoState(false);
-      storage.set(IS_AUTO_STORAGE_KEY, 'false');
+      await AsyncStorage.setItem(IS_AUTO_STORAGE_KEY, 'false');
     }
   }, [detectLocation]);
 

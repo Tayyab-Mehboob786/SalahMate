@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
+    VERIFY_EMAIL: '/auth/verify-email',
     LOGOUT: '/auth/logout',
     REFRESH_TOKEN: '/auth/refresh',
     FORGOT_PASSWORD: '/auth/forgot-password',
@@ -18,17 +19,25 @@ export const API_ENDPOINTS = {
 
   // User
   USER: {
-    PROFILE: '/user/profile',
-    UPDATE_PROFILE: '/user/profile',
-    CHANGE_PASSWORD: '/user/change-password',
+    PROFILE: '/users/profile',
+    UPDATE_PROFILE: '/users/profile',
+    UPDATE_THEME: '/users/theme',
+    CHANGE_PASSWORD: '/users/change-password',
+    UPLOAD_AVATAR: '/users/avatar',
   },
 
   // Prayer
   PRAYER: {
-    TIMES: '/prayer/times',
-    LOG: '/prayer/log',
-    HISTORY: '/prayer/history',
-    STREAK: '/prayer/streak',
+    BASE: '/prayers',
+    TODAY: '/prayers/today',
+    HISTORY: '/prayers/history',
+    STREAK: '/prayers/streak',
+    ANALYTICS: '/prayers/analytics',
+  },
+
+  // Prayer Timings (Phase 11.1)
+  PRAYER_TIMES: {
+    TODAY: '/prayer-times/today',
   },
 
   // Analytics
@@ -52,5 +61,10 @@ export const API_ENDPOINTS = {
   },
 } as const;
 
-export const API_BASE_URL = 'http://192.168.18.141:3000';
+import { Platform } from 'react-native';
+
+export const API_BASE_URL = Platform.OS === 'web' 
+  ? 'http://localhost:3000' 
+  : 'http://192.168.18.141:3000';
+  
 export const API_TIMEOUT = 10000;

@@ -19,6 +19,7 @@ import type { ColorSchemeName } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { salahMateDarkTheme, salahMateLightTheme } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
+import { usersApi } from '@/api';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -68,6 +69,7 @@ export interface ThemeContextType {
   readonly setThemeMode: (mode: ThemeMode) => void;
   readonly toggleTheme: () => void;
   readonly setTheme: (isDark: boolean) => void;
+  readonly syncThemeWithBackend: () => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -97,12 +99,33 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => getInitialThemeMode());
 
-  const setThemeMode = useCallback((mode: ThemeMode) => {
+  const setThemeMode = useCallback(async (mode: ThemeMode) => {
     setThemeModeState(mode);
     try {
       storage.set(THEME_MODE_STORAGE_KEY, mode);
+      
+      // Sync to backend immediately
+      const backendTheme = mode === 'light' ? 'LIGHT' : mode === 'dark' ? 'DARK' : 'SYSTEM';
+      await usersApi.updateTheme(backendTheme);
     } catch (error) {
-      console.warn('Error saving theme mode to local storage:', error);
+      console.warn('Error syncing theme with backend:', error);
+    }
+  }, []);
+
+  const syncThemeWithBackend = useCallback(async () => {
+    try {
+      const profile = await usersApi.getProfile();
+      if (profile && profile.theme) {
+        const backendTheme = profile.theme;
+        let mappedMode: ThemeMode = 'auto';
+        if (backendTheme === 'LIGHT') mappedMode = 'light';
+        if (backendTheme === 'DARK') mappedMode = 'dark';
+        
+        setThemeModeState(mappedMode);
+        storage.set(THEME_MODE_STORAGE_KEY, mappedMode);
+      }
+    } catch (error) {
+      console.warn('Failed to sync theme from backend on startup', error);
     }
   }, []);
 
@@ -113,16 +136,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     [setThemeMode]
   );
 
-  const toggleTheme = useCallback(() => {
-    setThemeModeState((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try {
-        storage.set(THEME_MODE_STORAGE_KEY, next);
-      } catch (error) {
-        console.warn('Error saving theme mode to local storage:', error);
-      }
-      return next;
-    });
+  const toggleTheme = useCallback(async () => {
+    const prev = storage.getString(THEME_MODE_STORAGE_KEY) as ThemeMode || 'auto';
+    const next = prev === 'dark' ? 'light' : 'dark';
+    
+    setThemeModeState(next);
+    try {
+      storage.set(THEME_MODE_STORAGE_KEY, next);
+      const backendTheme = next === 'light' ? 'LIGHT' : 'DARK';
+      await usersApi.updateTheme(backendTheme);
+    } catch (error) {
+      console.warn('Error saving theme mode to local storage:', error);
+    }
   }, []);
 
   const isDarkMode = useMemo(() => {
@@ -145,8 +170,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       setThemeMode,
       toggleTheme,
       setTheme,
+      syncThemeWithBackend,
     }),
-    [currentTheme, isDarkMode, themeMode, setThemeMode, toggleTheme, setTheme]
+    [currentTheme, isDarkMode, themeMode, setThemeMode, toggleTheme, setTheme, syncThemeWithBackend]
   );
 
   return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;

@@ -6,14 +6,15 @@
  */
 
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View, Image } from 'react-native';
+import type { StyleProp, ViewStyle, ImageSourcePropType } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { shadows } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 
 export interface GlassAvatarProps {
   initials?: string;
+  source?: ImageSourcePropType;
   size?: number;
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -22,6 +23,7 @@ export interface GlassAvatarProps {
 
 export const GlassAvatar: React.FC<GlassAvatarProps> = ({
   initials = 'SM',
+  source,
   size = 48,
   icon,
   style,
@@ -50,7 +52,9 @@ export const GlassAvatar: React.FC<GlassAvatarProps> = ({
       ]}
     >
       <View style={styles.content}>
-        {icon ?? (
+        {source ? (
+          <Image source={source} style={{ width: size, height: size, borderRadius }} />
+        ) : icon ?? (
           <Text
             variant="labelLarge"
             style={[

@@ -31,12 +31,12 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
             </Text>
           </View>
           <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '800', marginTop: 4 }}>
-            {streak} Days
+            {streak} {streak === 0 || streak === 1 ? 'Day' : 'Days'}
           </Text>
         </View>
 
         {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+        <View style={[styles.divider, { backgroundColor: theme.dark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }]} />
 
         {/* Right Column: Next Prayer */}
         <View style={styles.column}>
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
   column: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   headerRow: {
     flexDirection: 'row',
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    height: '100%',
+    height: 48,
     marginHorizontal: spacing.md,
   },
 });

@@ -13,6 +13,11 @@ export const authApi = {
     return response.data;
   },
 
+  verifyEmail: async (data: { email: string; otp: string }): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.post<{ success: boolean; message: string }>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, data);
+    return response.data;
+  },
+
   refresh: async (refreshToken: string): Promise<{ accessToken: string }> => {
     const response = await apiClient.post<{ accessToken: string }>(API_ENDPOINTS.AUTH.REFRESH_TOKEN, {
       refreshToken,

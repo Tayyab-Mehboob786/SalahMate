@@ -122,9 +122,12 @@ export default function SignupScreen() {
         email: email.trim(),
         password: password,
       });
-      setSuccessMessage('Account created successfully.');
+      setSuccessMessage('Account created successfully. Please verify your email.');
       setTimeout(() => {
-        router.replace('/(auth)/login');
+        router.replace({
+          pathname: '/(auth)/verify-email',
+          params: { email: email.trim() },
+        });
       }, 1500);
     } catch (error: any) {
       if (error.response) {

@@ -35,7 +35,6 @@ export const prayerService = {
    * Placeholder for fetching daily prayer schedule (`GET /prayer/times`).
    */
   async getPrayerTimes(params: GetPrayerTimesParams): Promise<DailyPrayerSchedule> {
-    void API_ENDPOINTS.PRAYER.TIMES;
     void apiClient;
     const mockSchedule: DailyPrayerSchedule = {
       date: params.date,
@@ -56,7 +55,6 @@ export const prayerService = {
    * Placeholder for logging a prayer (`POST /prayer/log`).
    */
   async trackPrayer(payload: LogPrayerPayload): Promise<PrayerLogRecord> {
-    void API_ENDPOINTS.PRAYER.LOG;
     const record: PrayerLogRecord = {
       id: `log_${Date.now()}`,
       userId: 'usr_mock_123',
@@ -93,15 +91,4 @@ export const prayerService = {
     ];
   },
 
-  /**
-   * Placeholder for retrieving user streak stats (`GET /prayer/streak`).
-   */
-  async getStreakStats(): Promise<StreakStats> {
-    void API_ENDPOINTS.PRAYER.STREAK;
-    return {
-      currentStreak: 14,
-      longestStreak: 42,
-      totalPrayersLogged: 320,
-    };
-  },
 };

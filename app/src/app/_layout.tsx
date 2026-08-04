@@ -16,7 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthContext, useAuth, useAuthProviderState } from '@/hooks/auth/useAuth';
-import { ThemeProvider, useAppTheme, LocationProvider, GoalsProvider } from '@/context';
+import { ThemeProvider, useAppTheme, LocationProvider, GoalsProvider, PrayerTimesProvider } from '@/context';
 
 // Keep the native splash screen visible until initial app loading / auth guard completes
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -27,7 +27,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
  * - Guest Routes: `(auth)`
  */
 function RootNavigationGuard() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, refreshUser } = useAuth();
+  const { syncThemeWithBackend } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -44,10 +45,17 @@ function RootNavigationGuard() {
     } 
     // Guard auth routes from authenticated users
     else if (isAuthenticated && inAuthGroup) {
+      if (!user) refreshUser();
+      syncThemeWithBackend();
       router.replace('/(tabs)/dashboard');
     }
+    // Also sync on initial mount if already authenticated
+    else if (isAuthenticated && isSplash) {
+      if (!user) refreshUser();
+      syncThemeWithBackend();
+    }
     // NOTE: isSplash routing is entirely handled by the index.tsx animated splash screen
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isAuthenticated, isLoading, user, segments, router]);
 
   return null;
 }
@@ -117,7 +125,9 @@ export default function RootLayout() {
       <ThemeProvider>
         <LocationProvider>
           <GoalsProvider>
-            <RootAppContent />
+            <PrayerTimesProvider>
+              <RootAppContent />
+            </PrayerTimesProvider>
           </GoalsProvider>
         </LocationProvider>
       </ThemeProvider>

@@ -13,6 +13,7 @@ export interface AuthContextType {
   user: any | null;
   login: (userData?: any) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -21,6 +22,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   login: () => {},
   logout: () => {},
+  refreshUser: async () => {},
 });
 
 export function useAuth(): AuthContextType {
@@ -31,6 +33,8 @@ export function useAuth(): AuthContextType {
  * Placeholder Auth Provider for Navigation Guard verification.
  * In production / future phases, this will read from SecureStore and TanStack Query.
  */
+import { usersApi } from '@/api/users.api';
+
 export function useAuthProviderState(): AuthContextType {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, _setIsLoading] = useState<boolean>(false);
@@ -50,6 +54,15 @@ export function useAuthProviderState(): AuthContextType {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const profile = await usersApi.getProfile();
+      setUser(profile);
+    } catch (error) {
+      console.warn('Failed to refresh user profile:', error);
+    }
+  };
+
   return useMemo(
     () => ({
       isAuthenticated,
@@ -57,6 +70,7 @@ export function useAuthProviderState(): AuthContextType {
       user,
       login,
       logout,
+      refreshUser,
     }),
     [isAuthenticated, isLoading, user],
   );

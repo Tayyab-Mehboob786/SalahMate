@@ -20,11 +20,11 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const theme = useTheme<SalahMateTheme>();
 
-  const userName = user?.name ?? 'Tayyab';
-  const userEmail = user?.email ?? 'tayyab@salahmate.app';
+  const userName = user?.fullName || 'User';
+  const userEmail = user?.email || 'user@example.com';
   const initials = userName
     .split(' ')
-    .map((part) => part[0])
+    .map((part: string) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
