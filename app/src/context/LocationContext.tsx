@@ -64,10 +64,12 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const detectLocation = useCallback(async () => {
+    console.log('[Location] Requesting live GPS location...');
     setIsDetecting(true);
     setError(null);
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
+      console.log(`[Location] Permission status: ${status}`);
       if (status !== 'granted') {
         setError('Location permission is required to automatically determine prayer timings.');
         setIsAutoState(false);
@@ -79,6 +81,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       let currentPosition = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
+      console.log(`[Location] GPS Coordinates: Latitude: ${currentPosition.coords.latitude}, Longitude: ${currentPosition.coords.longitude}`);
       
       let reverseGeocode = await Location.reverseGeocodeAsync({
         latitude: currentPosition.coords.latitude,
@@ -93,9 +96,10 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           latitude: currentPosition.coords.latitude,
           longitude: currentPosition.coords.longitude,
         };
+        console.log(`[Location] Reverse Geocode City: ${newLoc.city}, Country: ${newLoc.country}`);
         await saveLocationState(newLoc, true);
       } else {
-        // Fallback without geocoding
+        console.log(`[Location] Reverse Geocode failed, using Unknown City`);
         const newLoc = {
           city: 'Unknown City',
           country: 'Unknown Country',
@@ -105,7 +109,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         await saveLocationState(newLoc, true);
       }
     } catch (err) {
-      console.error('Error detecting location:', err);
+      console.error('[Location] Error detecting location:', err);
       setError('Could not detect location. Please try again or use manual location.');
     } finally {
       setIsDetecting(false);
@@ -128,14 +132,21 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         let hasCache = false;
 
         if (latStr && lngStr) {
-          const cachedLocation = {
-            latitude: parseFloat(latStr),
-            longitude: parseFloat(lngStr),
-            city: cityStr || 'Unknown City',
-            country: countryStr || 'Unknown Country'
-          };
-          setLocationState(cachedLocation);
-          hasCache = true;
+          if (latStr === '33.6844' && lngStr === '73.0479') {
+            console.log('[Location] Cleared stale Islamabad cache.');
+            await AsyncStorage.multiRemove([LAT_KEY, LNG_KEY, CITY_KEY, COUNTRY_KEY]);
+            hasCache = false;
+          } else {
+            console.log(`[Location] Cache used: Latitude: ${latStr}, Longitude: ${lngStr}, City: ${cityStr || 'Unknown'}, Country: ${countryStr || 'Unknown'}`);
+            const cachedLocation = {
+              latitude: parseFloat(latStr),
+              longitude: parseFloat(lngStr),
+              city: cityStr || 'Unknown City',
+              country: countryStr || 'Unknown Country'
+            };
+            setLocationState(cachedLocation);
+            hasCache = true;
+          }
         }
 
         const auto = isAutoStr !== 'false';

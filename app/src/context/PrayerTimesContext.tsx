@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useLocation } from './LocationContext';
+import { useSettings } from './SettingsContext';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { prayerTimesApi, PrayerTimesData } from '@/api/prayer-times.api';
 
 export interface PrayerTimesContextType {
@@ -20,23 +22,30 @@ export const PrayerTimesContext = createContext<PrayerTimesContextType>({
 
 export const PrayerTimesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { location } = useLocation();
+  const { settings } = useSettings();
+  const { isAuthenticated } = useAuth();
   const [data, setData] = useState<PrayerTimesData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isError, setIsError] = useState<boolean>(false);
 
   const lat = location?.latitude;
   const lng = location?.longitude;
+  const method = settings.prayerMethod;
 
   const fetchTimings = useCallback(async () => {
-    if (!lat || !lng) {
-      setIsLoading(false);
+    if (!lat || !lng || !isAuthenticated) {
+      if (!isAuthenticated) {
+        setIsLoading(false);
+      }
       return;
     }
 
     try {
       setIsLoading(true);
       setIsError(false);
-      const timings = await prayerTimesApi.getTodayTimings(lat, lng);
+      
+      console.log(`[PrayerTimes] Backend request URL: GET /prayer-times/today?lat=${lat}&lng=${lng}&method=${method}`);
+      const timings = await prayerTimesApi.getTodayTimings(lat, lng, method);
       
       // Fallback: If backend returns '20-02-1448', convert it to month name
       if (timings.hijriDate && timings.hijriDate.includes('-')) {
@@ -62,7 +71,7 @@ export const PrayerTimesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } finally {
       setIsLoading(false);
     }
-  }, [lat, lng]);
+  }, [lat, lng, method, isAuthenticated]);
 
   useEffect(() => {
     fetchTimings();

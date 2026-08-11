@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '@/components/common/AppIcon';
 import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, Pressable, TextInput } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
@@ -12,27 +12,13 @@ interface LocationPickerBottomSheetProps {
   onDismiss: () => void;
 }
 
-// Placeholder data until an API is integrated
-const PREDEFINED_CITIES: LocationData[] = [
-  { city: 'Makkah', country: 'Saudi Arabia', latitude: 21.4225, longitude: 39.8262 },
-  { city: 'Madinah', country: 'Saudi Arabia', latitude: 24.4672, longitude: 39.6112 },
-  { city: 'Islamabad', country: 'Pakistan', latitude: 33.6844, longitude: 73.0479 },
-  { city: 'London', country: 'United Kingdom', latitude: 51.5074, longitude: -0.1278 },
-  { city: 'New York', country: 'United States', latitude: 40.7128, longitude: -74.0060 },
-  { city: 'Istanbul', country: 'Turkey', latitude: 41.0082, longitude: 28.9784 },
-  { city: 'Kuala Lumpur', country: 'Malaysia', latitude: 3.1390, longitude: 101.6869 },
-  { city: 'Dubai', country: 'United Arab Emirates', latitude: 25.2048, longitude: 55.2708 },
-];
+import { useCitySearch } from '@/hooks/useCitySearch';
 
 export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps> = ({ visible, onDismiss }) => {
   const theme = useTheme<SalahMateTheme>();
   const { setManualLocation, setAutoLocation, isAuto } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredCities = PREDEFINED_CITIES.filter((loc) => 
-    loc.city.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    loc.country.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const { results: filteredCities, isLoading } = useCitySearch(searchQuery);
 
   const handleSelectCity = (loc: LocationData) => {
     setManualLocation(loc);
@@ -42,6 +28,12 @@ export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps>
   const handleSelectAuto = () => {
     setAutoLocation(true);
     onDismiss();
+  };
+
+  const handleSubmitEditing = () => {
+    if (filteredCities.length === 1) {
+      handleSelectCity(filteredCities[0]);
+    }
   };
 
   return (
@@ -59,6 +51,8 @@ export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps>
           placeholderTextColor={theme.colors.onSurfaceVariant}
           value={searchQuery}
           onChangeText={setSearchQuery}
+          onSubmitEditing={handleSubmitEditing}
+          returnKeyType="search"
         />
       </View>
 
@@ -87,25 +81,36 @@ export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps>
           )}
         </Pressable>
 
-        {filteredCities.map((loc, index) => (
-          <Pressable 
-            key={`${loc.city}-${index}`}
-            style={[styles.listItem, { borderBottomColor: theme.colors.border }]} 
-            onPress={() => handleSelectCity(loc)}
-          >
-            <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-              <AppIcon name="map-marker" size={20} color={theme.colors.onSurfaceVariant} />
-            </View>
-            <View style={styles.listItemText}>
-              <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '500' }}>
-                {loc.city}
-              </Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                {loc.country}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>Loading cities...</Text>
+          </View>
+        ) : (
+          filteredCities.map((loc, index) => (
+            <Pressable 
+              key={`${loc.city}-${index}`}
+              style={[styles.listItem, { borderBottomColor: theme.colors.border }]} 
+              onPress={() => handleSelectCity(loc)}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <AppIcon name="map-marker" size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
+              <View style={styles.listItemText}>
+                <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '500' }}>
+                  {loc.city}
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  {loc.country}
+                </Text>
+              </View>
+            </Pressable>
+          ))
+        )}
+        {searchQuery.length > 1 && !isLoading && filteredCities.length === 0 && (
+          <View style={styles.loadingContainer}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>No cities found for "{searchQuery}"</Text>
+          </View>
+        )}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </GlassBottomSheet>
@@ -133,7 +138,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   listContainer: {
-    flex: 1,
+    flexShrink: 1,
+    width: '100%',
   },
   listItem: {
     flexDirection: 'row',
@@ -151,5 +157,10 @@ const styles = StyleSheet.create({
   },
   listItemText: {
     flex: 1,
+  },
+  loadingContainer: {
+    padding: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

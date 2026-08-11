@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { AppIcon } from '@/components';
+import { AppIcon } from '@/components/common/AppIcon';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 

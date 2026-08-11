@@ -26,7 +26,7 @@ export class AladhanPrayerTimesProvider implements PrayerTimesProvider {
       const date = data.date;
 
       return {
-        gregorianDate: date.gregorian.date,
+        gregorianDate: `${date.gregorian.day} ${date.gregorian.month.en} ${date.gregorian.year}`,
         hijriDate: `${date.hijri.day} ${date.hijri.month.en} ${date.hijri.year} AH`,
         timings: {
           fajr: timings.Fajr,

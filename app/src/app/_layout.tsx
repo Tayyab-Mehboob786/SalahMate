@@ -16,7 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthContext, useAuth, useAuthProviderState } from '@/hooks/auth/useAuth';
-import { ThemeProvider, useAppTheme, LocationProvider, GoalsProvider, PrayerTimesProvider } from '@/context';
+import { ThemeProvider, useAppTheme, LocationProvider, GoalsProvider, PrayerTimesProvider, SettingsProvider, NotificationProvider } from '@/context';
 
 // Keep the native splash screen visible until initial app loading / auth guard completes
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -125,9 +125,13 @@ export default function RootLayout() {
       <ThemeProvider>
         <LocationProvider>
           <GoalsProvider>
-            <PrayerTimesProvider>
-              <RootAppContent />
-            </PrayerTimesProvider>
+            <SettingsProvider>
+              <NotificationProvider>
+                <PrayerTimesProvider>
+                  <RootAppContent />
+                </PrayerTimesProvider>
+              </NotificationProvider>
+            </SettingsProvider>
           </GoalsProvider>
         </LocationProvider>
       </ThemeProvider>

@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '../common/AppIcon';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
@@ -44,8 +44,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
   // AI Message
   return (
     <Animated.View entering={FadeInUp.duration(300)} style={[styles.container, styles.aiContainer]}>
-      <View style={[styles.aiAvatar, { backgroundColor: theme.colors.primaryContainer }]}>
-        <AppIcon name="robot" size={18} color={theme.colors.onPrimaryContainer} />
+      <View style={[styles.aiAvatar, { backgroundColor: theme.colors.primary }]}>
+        <AppIcon name="robot" size={18} color={theme.colors.onPrimary} />
       </View>
       <View style={styles.aiBubbleWrapper}>
         <GlassCard style={[styles.aiBubble, { padding: spacing.md }]}>

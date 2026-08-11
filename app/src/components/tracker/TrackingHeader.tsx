@@ -3,7 +3,7 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import type { SalahMateTheme } from '@/theme';
 import { spacing } from '@/theme';
-import { AppIcon } from '@/components';
+import { AppIcon } from '@/components/common/AppIcon';
 import { useRouter } from 'expo-router';
 
 interface TrackingHeaderProps {

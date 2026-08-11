@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     maxHeight: '80%',
+    flexShrink: 1,
   },
   handleContainer: {
     alignItems: 'center',
@@ -138,5 +139,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingTop: spacing.sm,
+    flexShrink: 1,
   },
 });

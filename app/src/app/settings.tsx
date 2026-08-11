@@ -9,8 +9,8 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text, useTheme } from 'react-native-paper';
-import { AppIcon, GlassCard, ScreenContainer, Switch, LocationPickerBottomSheet } from '@/components';
-import { useAppTheme, useLocation } from '@/context';
+import { AppIcon, GlassCard, ScreenContainer, Switch, LocationPickerBottomSheet, OptionsPickerBottomSheet, PickerOption } from '@/components';
+import { useAppTheme, useLocation, useSettings, useNotifications } from '@/context';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 
@@ -19,7 +19,41 @@ export default function SettingsScreen() {
   const theme = useTheme<SalahMateTheme>();
   const { themeMode, setThemeMode } = useAppTheme();
   const { location, isAuto, isDetecting, setAutoLocation, refreshLocation } = useLocation();
+  const { settings, updateSetting } = useSettings();
+  const { notificationsEnabled, sendTestNotification } = useNotifications();
   const [isPickerVisible, setIsPickerVisible] = useState(false);
+
+  const [activePicker, setActivePicker] = useState<'calc' | 'juristic' | 'time' | 'hijri' | null>(null);
+
+  // Settings Definitions
+  const calcMethods: PickerOption<number>[] = [
+    { label: 'Muslim World League', value: 1, description: 'Standard method' },
+    { label: 'ISNA', value: 2, description: 'Islamic Society of North America' },
+    { label: 'Egyptian', value: 5, description: 'Egyptian General Authority of Survey' },
+    { label: 'Umm Al-Qura', value: 4, description: 'Mecca, Saudi Arabia' },
+    { label: 'Karachi', value: 0, description: 'University of Islamic Sciences' },
+    { label: 'Tehran', value: 7, description: 'Institute of Geophysics' },
+    { label: 'Dubai', value: 16 },
+    { label: 'Qatar', value: 11 },
+  ];
+
+  const juristicMethods: PickerOption<number>[] = [
+    { label: 'Standard', value: 0, description: "Shafi'i, Maliki, Hanbali (Shadow 1x)" },
+    { label: 'Hanafi', value: 1, description: 'Later Asr time (Shadow 2x)' },
+  ];
+
+  const timeFormats: PickerOption<'12h' | '24h'>[] = [
+    { label: '12-Hour (AM/PM)', value: '12h' },
+    { label: '24-Hour', value: '24h' },
+  ];
+
+  const hijriAdjustments: PickerOption<number>[] = [
+    { label: '+2 Days', value: 2 },
+    { label: '+1 Day', value: 1 },
+    { label: '0 Days (Default)', value: 0 },
+    { label: '-1 Day', value: -1 },
+    { label: '-2 Days', value: -2 },
+  ];
 
   // Interactive toggle states
   const [notifications, setNotifications] = useState(true);
@@ -250,7 +284,7 @@ export default function SettingsScreen() {
             <Switch value={adhanSound} onValueChange={setAdhanSound} disabled={!notifications} />
           </View>
 
-          <View style={styles.settingRowLast}>
+          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
             <View style={styles.labelBox}>
               <AppIcon name="vibrate" size={22} variant="primary" />
               <View style={styles.textContainer}>
@@ -264,6 +298,17 @@ export default function SettingsScreen() {
             </View>
             <Switch value={haptics} onValueChange={setHaptics} />
           </View>
+
+          <Pressable 
+            style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}
+            onPress={() => sendTestNotification(2)}
+            disabled={!notificationsEnabled}
+          >
+            <AppIcon name="bell-plus" size={20} color={notificationsEnabled ? theme.colors.primary : theme.colors.onSurfaceVariant} />
+            <Text variant="bodyMedium" style={{ color: notificationsEnabled ? theme.colors.primary : theme.colors.onSurfaceVariant, fontWeight: '600', marginLeft: spacing.sm }}>
+              {notificationsEnabled ? 'Send Test Notification (2s)' : 'Permissions Denied/Disabled'}
+            </Text>
+          </Pressable>
         </GlassCard>
 
         {/* Calculation Methods Card */}
@@ -271,7 +316,10 @@ export default function SettingsScreen() {
           CALCULATION METHODS
         </Text>
         <GlassCard borderRadius={20}>
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
+          <Pressable 
+            style={({ pressed }) => [styles.settingRow, { borderBottomColor: theme.colors.border }, pressed && { opacity: 0.7 }]}
+            onPress={() => setActivePicker('calc')}
+          >
             <View style={styles.labelBox}>
               <AppIcon name="compass-outline" size={22} variant="primary" />
               <View style={styles.textContainer}>
@@ -279,14 +327,17 @@ export default function SettingsScreen() {
                   Convention
                 </Text>
                 <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  Muslim World League (Standard)
+                  {calcMethods.find(m => m.value === settings.prayerMethod)?.label || 'Muslim World League'}
                 </Text>
               </View>
             </View>
             <AppIcon name="chevron-right" size="lg" variant="secondary" />
-          </View>
+          </Pressable>
 
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
+          <Pressable 
+            style={({ pressed }) => [styles.settingRow, { borderBottomColor: theme.colors.border }, pressed && { opacity: 0.7 }]}
+            onPress={() => setActivePicker('juristic')}
+          >
             <View style={styles.labelBox}>
               <AppIcon name="weather-partly-cloudy" size={22} variant="primary" />
               <View style={styles.textContainer}>
@@ -294,12 +345,48 @@ export default function SettingsScreen() {
                   Asr Juristic Method
                 </Text>
                 <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  Shafi&apos;i, Maliki, Hanbali (Shadow 1x)
+                  {juristicMethods.find(m => m.value === settings.juristicMethod)?.label || 'Standard'}
                 </Text>
               </View>
             </View>
             <AppIcon name="chevron-right" size="lg" variant="secondary" />
-          </View>
+          </Pressable>
+
+          <Pressable 
+            style={({ pressed }) => [styles.settingRow, { borderBottomColor: theme.colors.border }, pressed && { opacity: 0.7 }]}
+            onPress={() => setActivePicker('time')}
+          >
+            <View style={styles.labelBox}>
+              <AppIcon name="clock-outline" size={22} variant="primary" />
+              <View style={styles.textContainer}>
+                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
+                  Time Format
+                </Text>
+                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
+                  {settings.timeFormat === '12h' ? '12-Hour (AM/PM)' : '24-Hour'}
+                </Text>
+              </View>
+            </View>
+            <AppIcon name="chevron-right" size="lg" variant="secondary" />
+          </Pressable>
+
+          <Pressable 
+            style={({ pressed }) => [styles.settingRowLast, pressed && { opacity: 0.7 }]}
+            onPress={() => setActivePicker('hijri')}
+          >
+            <View style={styles.labelBox}>
+              <AppIcon name="calendar-sync" size={22} variant="primary" />
+              <View style={styles.textContainer}>
+                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
+                  Hijri Adjustment
+                </Text>
+                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
+                  {settings.hijriAdjustment > 0 ? `+${settings.hijriAdjustment}` : settings.hijriAdjustment} Days
+                </Text>
+              </View>
+            </View>
+            <AppIcon name="chevron-right" size="lg" variant="secondary" />
+          </Pressable>
 
           <View style={styles.settingRowLast}>
             <View style={styles.labelBox}>
@@ -325,6 +412,42 @@ export default function SettingsScreen() {
       </View>
     </ScreenContainer>
     <LocationPickerBottomSheet visible={isPickerVisible} onDismiss={() => setIsPickerVisible(false)} />
+    
+    <OptionsPickerBottomSheet
+      visible={activePicker === 'calc'}
+      onDismiss={() => setActivePicker(null)}
+      title="Calculation Method"
+      options={calcMethods}
+      selectedValue={settings.prayerMethod}
+      onSelect={(val) => updateSetting('prayerMethod', val)}
+    />
+    
+    <OptionsPickerBottomSheet
+      visible={activePicker === 'juristic'}
+      onDismiss={() => setActivePicker(null)}
+      title="Asr Juristic Method"
+      options={juristicMethods}
+      selectedValue={settings.juristicMethod}
+      onSelect={(val) => updateSetting('juristicMethod', val)}
+    />
+    
+    <OptionsPickerBottomSheet
+      visible={activePicker === 'time'}
+      onDismiss={() => setActivePicker(null)}
+      title="Time Format"
+      options={timeFormats}
+      selectedValue={settings.timeFormat}
+      onSelect={(val) => updateSetting('timeFormat', val)}
+    />
+    
+    <OptionsPickerBottomSheet
+      visible={activePicker === 'hijri'}
+      onDismiss={() => setActivePicker(null)}
+      title="Hijri Adjustment"
+      options={hijriAdjustments}
+      selectedValue={settings.hijriAdjustment}
+      onSelect={(val) => updateSetting('hijriAdjustment', val)}
+    />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
-import { AppIcon } from '@/components';
+import { AppIcon } from '@/components/common/AppIcon';
 import type { SalahMateTheme } from '@/theme';
 import type { PrayerHistoryItem } from '@/api/prayers.api';
 

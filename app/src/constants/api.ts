@@ -59,12 +59,25 @@ export const API_ENDPOINTS = {
     REGISTER_TOKEN: '/notifications/register-token',
     SETTINGS: '/notifications/settings',
   },
+
+  // Quran
+  QURAN: {
+    SURAHS: '/quran/surahs',
+    SURAH: '/quran/surah',
+    PAGE: '/quran/page',
+    JUZ: '/quran/juz',
+    SEARCH: '/quran/search',
+    TRANSLATIONS: '/quran/translations',
+    AUDIO: '/quran/audio',
+  }
 } as const;
 
 import { Platform } from 'react-native';
 
-export const API_BASE_URL = Platform.OS === 'web' 
-  ? 'http://localhost:3000' 
-  : 'http://192.168.18.141:3000';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || (
+  Platform.OS === 'android' 
+    ? 'http://10.0.2.2:3000' // Default for Android Emulator
+    : 'http://localhost:3000' // Default for Web/iOS Simulator
+);
   
 export const API_TIMEOUT = 10000;

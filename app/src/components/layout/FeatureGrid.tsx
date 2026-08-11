@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '@/components/common/AppIcon';
 /**
  * SalahMate — FeatureGrid Component (`src/components/layout/FeatureGrid.tsx`)
  *

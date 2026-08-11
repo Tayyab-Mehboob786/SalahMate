@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '../common/AppIcon';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
@@ -12,21 +12,12 @@ interface WelcomeCardProps {
 
 export const WelcomeCard: React.FC<WelcomeCardProps> = ({ userName }) => {
   const theme = useTheme<SalahMateTheme>();
-  const firstName = userName.split(' ')[0] || 'Friend';
+  const firstName = userName ? userName.split(' ')[0] : '';
 
   return (
     <GlassCard style={[styles.card, { padding: spacing.lg }]}>
-      <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
-          <AppIcon name="robot" size={24} color={theme.colors.onPrimaryContainer} />
-        </View>
-        <Text variant="titleMedium" style={[styles.title, { color: theme.colors.primary }]}>
-          SalahMate AI
-        </Text>
-      </View>
-
-      <Text variant="bodyLarge" style={[styles.greeting, { color: theme.colors.onSurface }]}>
-        Assalamu Alaikum, {firstName} 👋
+      <Text variant="bodyLarge" style={[styles.greeting, { color: theme.colors.onSurface, fontWeight: 'bold', textAlign: 'center' }]}>
+        {firstName ? `Assalamu Alaikum, ${firstName}` : 'Assalamu Alaikum'}
       </Text>
       
       <Text variant="bodyMedium" style={[styles.description, { color: theme.colors.onSurfaceVariant }]}>
@@ -54,22 +45,6 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ userName }) => {
 const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.sm,
-  },
-  title: {
-    fontWeight: '700',
   },
   greeting: {
     fontWeight: '600',

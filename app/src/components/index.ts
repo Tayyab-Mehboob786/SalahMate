@@ -21,6 +21,7 @@ export * from './analytics/AnalyticsSummaryCard';
 export * from './charts';
 export * from './navigation/LeftNavigationDrawer';
 export * from './prayer/PrayerDetailsBottomSheet';
+export * from './settings';
 export * from './ai-motivation';
 export * from './location';
 export * from './skeletons';

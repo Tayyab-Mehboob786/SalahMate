@@ -134,7 +134,10 @@ export default function TrackingScreen() {
 
   return (
     <ScreenContainer scrollable withPadding withGlassGradient>
-      <TrackingHeader />
+      <TrackingHeader 
+        gregorianDate={prayerTimesData?.gregorianDate}
+        hijriDate={prayerTimesData?.hijriDate}
+      />
       
       {isLoading ? (
         <View style={styles.loadingContainer}>

@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '../common/AppIcon';
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -8,6 +8,7 @@ import { SuggestionChips } from './SuggestionChips';
 import { ChatBubble, ChatMessage } from './ChatBubble';
 import { ChatInput } from './ChatInput';
 import { spacing } from '@/theme';
+import { useAI } from '@/features/ai/hooks/useAI';
 
 interface AiChatBottomSheetProps {
   visible: boolean;
@@ -26,52 +27,26 @@ const DEFAULT_SUGGESTIONS = [
 export const AiChatBottomSheet: React.FC<AiChatBottomSheetProps> = ({ visible, onDismiss }) => {
   const { user } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
-  
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
+  const { messages, isTyping, sendMessage, clearChat } = useAI();
 
   // Reset chat when opened
   useEffect(() => {
     if (visible) {
-      setMessages([]);
-      setIsTyping(false);
+      clearChat();
     }
-  }, [visible]);
+  }, [visible, clearChat]);
 
-  const handleSendMessage = (text: string) => {
-    // Add user message
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      text,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-    
-    setMessages((prev) => [...prev, userMsg]);
-    setIsTyping(true);
-    
-    // Auto-scroll
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      const aiMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        text: "Thank you for your question.\n\nAI integration will be implemented in an upcoming development phase.\n\nThis response is currently a demonstration of the future AI assistant.",
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-      
-      // Auto-scroll
+  // Auto-scroll on new messages
+  useEffect(() => {
+    if (messages.length > 0 || isTyping) {
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
-    }, 1500); // 1.5 second simulated delay
+    }
+  }, [messages, isTyping]);
+
+  const handleSendMessage = (text: string) => {
+    sendMessage(text);
   };
 
   return (
@@ -95,7 +70,7 @@ export const AiChatBottomSheet: React.FC<AiChatBottomSheetProps> = ({ visible, o
         ) : (
           <View style={styles.chatHistory}>
             {messages.map((msg) => (
-              <ChatBubble key={msg.id} message={msg} />
+              <ChatBubble key={msg.id} message={msg as ChatMessage} />
             ))}
             {isTyping && (
               <ChatBubble 
@@ -123,7 +98,8 @@ const styles = StyleSheet.create({
     maxHeight: '90%', // Increased max height for better chat experience
   },
   scrollContainer: {
-    flex: 1,
+    flexShrink: 1,
+    width: '100%',
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,

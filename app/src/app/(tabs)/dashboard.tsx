@@ -16,6 +16,7 @@ import { usePullToRefresh } from '@/hooks';
 import { prayersApi, StreakData } from '@/api/prayers.api';
 import { useDrawer } from '@/context/DrawerContext';
 import { useLocation } from '@/context/LocationContext';
+import { aiService } from '@/features/ai/services/ai.service';
 import {
   AppIcon,
   GlassButton,
@@ -75,6 +76,7 @@ export default function DashboardScreen() {
   const [isSpiritualInsightsVisible, setIsSpiritualInsightsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [streakData, setStreakData] = useState<StreakData | null>(null);
+  const [insight, setInsight] = useState<string>('Loading personalized insights...');
   
   const { data: prayerTimesData, isLoading: isPrayerTimesLoading, isError: isPrayerTimesError, getNextPrayer } = useSharedPrayerTimes();
   
@@ -92,10 +94,21 @@ export default function DashboardScreen() {
     }
   }, []);
 
+  const fetchInsight = useCallback(async () => {
+    try {
+      const res = await aiService.getInsight(location?.latitude, location?.longitude);
+      setInsight(res.insight);
+    } catch (e) {
+      console.log('Failed to fetch AI insight', e);
+      setInsight('AI Spiritual Insights');
+    }
+  }, [location]);
+
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+      fetchInsight();
+    }, [loadData, fetchInsight])
   );
 
   const handleOpenChat = () => {
@@ -254,7 +267,9 @@ export default function DashboardScreen() {
               <View style={styles.aiCompactLeft}>
                 <AppIcon name="robot-outline" size="md" variant="primary" />
                 <View style={styles.aiCompactText}>
-                  <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>AI Spiritual Insights</Text>
+                  <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: '700' }} numberOfLines={2}>
+                    {insight}
+                  </Text>
                 </View>
               </View>
               <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '700' }}>

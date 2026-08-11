@@ -19,7 +19,9 @@ interface AppEnv {
 
 const expoExtra = Constants.expoConfig?.extra ?? {};
 
+import { API_BASE_URL } from './api';
+
 export const env: AppEnv = {
-  API_BASE_URL: (expoExtra.API_BASE_URL as string) || 'http://localhost:3000',
+  API_BASE_URL: (expoExtra.API_BASE_URL as string) || API_BASE_URL,
   APP_ENV: (expoExtra.APP_ENV as AppEnv['APP_ENV']) || 'development',
 };

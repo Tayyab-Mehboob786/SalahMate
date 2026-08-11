@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '@/components/common/AppIcon';
 /**
  * SalahMate Left Navigation Drawer (`src/components/navigation/LeftNavigationDrawer.tsx`)
  *

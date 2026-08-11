@@ -22,9 +22,9 @@ export interface GetPrayerTimesResponse {
 }
 
 export const prayerTimesApi = {
-  getTodayTimings: async (lat: number, lng: number): Promise<PrayerTimesData> => {
+  getTodayTimings: async (lat: number, lng: number, method?: number): Promise<PrayerTimesData> => {
     const response = await apiClient.get<GetPrayerTimesResponse>(API_ENDPOINTS.PRAYER_TIMES.TODAY, {
-      params: { lat, lng },
+      params: { lat, lng, method },
     });
     return response.data.data;
   },

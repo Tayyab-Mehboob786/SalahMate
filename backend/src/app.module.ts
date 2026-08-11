@@ -9,6 +9,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 import { PrayersModule } from './prayers/prayers.module';
 import { PrayerTimesModule } from './prayer-times/prayer-times.module';
+import { AiModule } from './ai/ai.module';
+import { QuranModule } from './quran/quran.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { PrayerTimesModule } from './prayer-times/prayer-times.module';
     ]),
     PrayersModule,
     PrayerTimesModule,
+    AiModule,
+    QuranModule,
   ],
   controllers: [],
   providers: [],

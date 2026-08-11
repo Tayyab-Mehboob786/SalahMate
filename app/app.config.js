@@ -10,9 +10,7 @@
  * and accessed at runtime through expo-constants.
  */
 
-import type { ExpoConfig, ConfigContext } from 'expo/config';
-
-export default ({ config }: ConfigContext): ExpoConfig => ({
+export default ({ config }) => ({
   ...config,
   name: 'SalahMate',
   slug: 'salahmate',
@@ -38,7 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     translucent: true,
   },
   web: {
-    output: 'static' as const,
+    output: 'static',
     favicon: './assets/images/favicon.png',
   },
 
@@ -58,6 +56,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     'expo-secure-store',
+    [
+      'expo-location',
+      {
+        locationAlwaysAndWhenInUsePermission: 'Allow $(PRODUCT_NAME) to use your location to calculate accurate prayer timings.',
+      }
+    ],
+    [
+      'expo-notifications',
+      {
+        icon: './assets/images/icon.png',
+        color: '#15803d',
+        defaultChannel: 'salahmate-default'
+      }
+    ]
   ],
   experiments: {
     typedRoutes: true,
@@ -66,5 +78,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000',
     APP_ENV: process.env.APP_ENV || 'development',
+    eas: {
+      projectId: "8ac13208-3f99-4b9e-9bed-5149499529c8"
+    }
   },
 });

@@ -6,12 +6,13 @@
  * and upcoming sacred events.
  */
 
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { Pressable, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { AppIcon, GlassCard, GlassHeader, ScreenContainer } from '@/components';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
+import { useHijriCalendar } from '@/hooks/hijri/useHijriCalendar';
 
 const ISLAMIC_MONTHS = [
   'Muharram',
@@ -32,11 +33,38 @@ const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function HijriCalendarScreen() {
   const theme = useTheme<SalahMateTheme>();
-  const [selectedMonthIndex, setSelectedMonthIndex] = useState(0); // Muharram
+  const { monthData, loading, error, currentHijriMonth, currentHijriYear, todayHijriStr, nextMonth, prevMonth } = useHijriCalendar();
 
-  // Simulated 30 days for Muharram 1448 AH
-  const daysInMonth = Array.from({ length: 30 }, (_, i) => i + 1);
-  const todayDate = 3; // 3 Muharram
+  // Selected month in the horizontal selector
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
+
+  // Sync horizontal selector with currentHijriMonth
+  const activeMonthIndex = selectedMonthIndex !== null ? selectedMonthIndex : (currentHijriMonth ? currentHijriMonth - 1 : 0);
+
+  // If user taps horizontal selector, we might want to fetch that month, 
+  // but for now, we rely on Next/Prev month buttons or we can implement it.
+  // Since the hook uses currentHijriMonth, let's keep horizontal selector as display only or navigate.
+
+  const firstDayOffset = useMemo(() => {
+    if (!monthData || monthData.length === 0) return 0;
+    const firstDay = monthData[0].gregorian.weekday.en.toLowerCase();
+    const map: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6
+    };
+    return map[firstDay] || 0;
+  }, [monthData]);
+
+  const monthName = currentHijriMonth ? ISLAMIC_MONTHS[currentHijriMonth - 1] : ISLAMIC_MONTHS[0];
+  const yearStr = currentHijriYear ? `${currentHijriYear} AH` : '1446 AH';
+
+  // Find today in monthData
+  const todayObj = monthData.find(d => d.hijri.date === todayHijriStr);
+  const displayGregorian = todayObj ? `${todayObj.gregorian.day} ${todayObj.gregorian.month.en} ${todayObj.gregorian.year} CE` : '';
+  const displayHijri = todayObj ? `${parseInt(todayObj.hijri.day, 10)} ${todayObj.hijri.month.en} ${todayObj.hijri.year} AH` : '';
+  const displayWeekday = todayObj ? `${todayObj.gregorian.weekday.en}` : '';
+
+  // Get all holidays in this month
+  const events = monthData.filter(d => d.hijri.holidays.length > 0);
 
   return (
     <ScreenContainer scrollable withPadding withGlassGradient>
@@ -53,15 +81,15 @@ export default function HijriCalendarScreen() {
               </Text>
             </View>
             <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              July 17, 2026 CE
+              {displayGregorian || 'Loading...'}
             </Text>
           </View>
 
           <Text variant="headlineMedium" style={[styles.hijriTitle, { color: theme.colors.onSurface }]}>
-            3 {ISLAMIC_MONTHS[selectedMonthIndex]} 1448 AH
+            {displayHijri || `${monthName} ${yearStr}`}
           </Text>
           <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '600' }}>
-            Friday · Jumu&apos;ah Mubarak
+            {displayWeekday || 'Today'}
           </Text>
         </GlassCard>
 
@@ -95,15 +123,18 @@ export default function HijriCalendarScreen() {
           })}
         </View>
 
-        {/* Monthly Calendar Layout */}
         <GlassCard borderRadius={24} contentStyle={styles.calendarCard}>
           <View style={styles.calendarHeader}>
             <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
-              {ISLAMIC_MONTHS[selectedMonthIndex]} 1448 AH
+              {monthName} {yearStr}
             </Text>
             <View style={styles.navIcons}>
-              <AppIcon name="chevron-left" size="lg" variant="secondary" />
-              <AppIcon name="chevron-right" size="lg" variant="secondary" />
+              <Pressable onPress={prevMonth} style={{ padding: 4 }}>
+                <AppIcon name="chevron-left" size="lg" variant="secondary" />
+              </Pressable>
+              <Pressable onPress={nextMonth} style={{ padding: 4 }}>
+                <AppIcon name="chevron-right" size="lg" variant="secondary" />
+              </Pressable>
             </View>
           </View>
 
@@ -117,61 +148,77 @@ export default function HijriCalendarScreen() {
           </View>
 
           {/* Calendar Grid */}
-          <View style={styles.grid}>
-            {/* 3 placeholder empty slots for month start offset */}
-            {[0, 1, 2].map((slot) => (
-              <View key={`empty-${slot}`} style={styles.dayCell} />
-            ))}
-            {daysInMonth.map((day) => {
-              const isToday = selectedMonthIndex === 0 && day === todayDate;
-              return (
-                <View
-                  key={`day-${day}`}
-                  style={[
-                    styles.dayCell,
-                    isToday && [styles.todayCell, { backgroundColor: theme.colors.primary, shadowColor: theme.colors.shadow }],
-                  ]}
-                >
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: isToday ? theme.colors.textOnPrimary : theme.colors.textPrimary,
-                      fontWeight: isToday ? '800' : '600',
-                    }}
+          {loading ? (
+            <View style={{ height: 250, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+          ) : (
+            <View style={styles.grid}>
+              {/* Empty slots for month start offset */}
+              {Array.from({ length: firstDayOffset }).map((_, slot) => (
+                <View key={`empty-${slot}`} style={styles.dayCell} />
+              ))}
+              {monthData.map((dayData) => {
+                const day = parseInt(dayData.hijri.day, 10);
+                const isToday = dayData.hijri.date === todayHijriStr;
+                const hasEvent = dayData.hijri.holidays.length > 0;
+
+                return (
+                  <View
+                    key={`day-${dayData.hijri.date}`}
+                    style={[
+                      styles.dayCell,
+                      isToday && [styles.todayCell, { backgroundColor: theme.colors.primary, shadowColor: theme.colors.shadow }],
+                    ]}
                   >
-                    {day}
-                  </Text>
-                  {isToday ? <View style={[styles.dotIndicator, { backgroundColor: theme.colors.textOnPrimary }]} /> : null}
-                </View>
-              );
-            })}
-          </View>
+                    <Text
+                      variant="bodyMedium"
+                      style={{
+                        color: isToday ? theme.colors.textOnPrimary : theme.colors.textPrimary,
+                        fontWeight: isToday ? '800' : '600',
+                      }}
+                    >
+                      {day}
+                    </Text>
+                    {isToday ? <View style={[styles.dotIndicator, { backgroundColor: theme.colors.textOnPrimary }]} /> : 
+                     hasEvent ? <View style={[styles.dotIndicator, { backgroundColor: theme.colors.error }]} /> : null}
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </GlassCard>
 
         {/* Upcoming Islamic Events Card */}
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          SACRED EVENTS IN {ISLAMIC_MONTHS[selectedMonthIndex].toUpperCase()}
-        </Text>
-        <GlassCard borderRadius={20} contentStyle={styles.eventsCard}>
-          <View style={styles.eventRow}>
-            <View style={[styles.eventDateBox, { backgroundColor: theme.dark ? 'rgba(25, 105, 140, 0.18)' : '#E8F4F8', borderWidth: 1, borderColor: theme.dark ? 'rgba(25, 105, 140, 0.25)' : 'rgba(25, 105, 140, 0.15)' }]}>
-              <Text variant="titleMedium" style={{ color: theme.dark ? '#7FC8E8' : '#145874', fontWeight: '800' }}>
-                10
-              </Text>
-              <Text variant="labelSmall" style={{ color: theme.dark ? '#7FC8E8' : '#145874' }}>
-                MUH
-              </Text>
-            </View>
-            <View style={styles.eventDetails}>
-              <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
-                Day of Ashura
-              </Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                Commemorating the liberation of Prophet Musa (AS) · Highly recommended fasting day.
-              </Text>
-            </View>
-          </View>
-        </GlassCard>
+        {events.length > 0 && (
+          <>
+            <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+              SACRED EVENTS IN {monthName.toUpperCase()}
+            </Text>
+            {events.map((evt) => (
+              <GlassCard key={evt.hijri.date} borderRadius={20} contentStyle={styles.eventsCard}>
+                <View style={styles.eventRow}>
+                  <View style={[styles.eventDateBox, { backgroundColor: theme.dark ? 'rgba(25, 105, 140, 0.18)' : '#E8F4F8', borderWidth: 1, borderColor: theme.dark ? 'rgba(25, 105, 140, 0.25)' : 'rgba(25, 105, 140, 0.15)' }]}>
+                    <Text variant="titleMedium" style={{ color: theme.dark ? '#7FC8E8' : '#145874', fontWeight: '800' }}>
+                      {parseInt(evt.hijri.day, 10)}
+                    </Text>
+                    <Text variant="labelSmall" style={{ color: theme.dark ? '#7FC8E8' : '#145874' }}>
+                      {evt.hijri.month.en.substring(0, 3).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.eventDetails}>
+                    <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
+                      {evt.hijri.holidays.join(', ')}
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      {evt.gregorian.day} {evt.gregorian.month.en} {evt.gregorian.year}
+                    </Text>
+                  </View>
+                </View>
+              </GlassCard>
+            ))}
+          </>
+        )}
       </View>
     </ScreenContainer>
   );

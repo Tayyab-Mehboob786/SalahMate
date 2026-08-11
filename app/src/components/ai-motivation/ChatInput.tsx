@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '../common/AppIcon';
 import React, { useState } from 'react';
 import { StyleSheet, View, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';

@@ -1,4 +1,4 @@
-import { AppIcon } from '@/components';
+import { AppIcon } from '@/components/common/AppIcon';
 /**
  * SalahMate — GlassHeader Component
  *
