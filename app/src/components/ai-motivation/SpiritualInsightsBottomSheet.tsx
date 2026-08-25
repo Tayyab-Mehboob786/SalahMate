@@ -1,8 +1,8 @@
 import { AppIcon } from '../common/AppIcon';
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { GlassBottomSheet, GlassCard, GlassButton } from '@/components/glass';
+import { GlassBottomSheet } from '@/components/glass';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 
@@ -23,7 +23,7 @@ export const SpiritualInsightsBottomSheet: React.FC<SpiritualInsightsBottomSheet
     <GlassBottomSheet
       visible={visible}
       onDismiss={onDismiss}
-      style={styles.bottomSheet}
+      style={[styles.bottomSheet, { backgroundColor: 'rgba(0,0,0,0.75)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }]}
     >
       <ScrollView 
         style={styles.scrollContainer}
@@ -32,48 +32,53 @@ export const SpiritualInsightsBottomSheet: React.FC<SpiritualInsightsBottomSheet
       >
         {/* Custom Header */}
         <View style={styles.headerContainer}>
-          <Text variant="titleLarge" style={[styles.mainTitle, { color: theme.colors.onSurface, textAlign: 'center' }]}>
-            🤖 Daily Spiritual Companion
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(142, 220, 184, 0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(142, 220, 184, 0.3)' }}>
+            <AppIcon name="robot-outline" size={24} color="#8EDCB8" />
+          </View>
+          <Text variant="titleLarge" style={[styles.mainTitle, { color: '#FFFFFF', textAlign: 'center' }]}>
+            Daily Spiritual Companion
           </Text>
-          <Text variant="bodyMedium" style={[styles.subTitle, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+          <Text variant="bodyMedium" style={[styles.subTitle, { color: 'rgba(255,255,255,0.7)', textAlign: 'center' }]}>
             A moment of reflection for your day.
           </Text>
         </View>
         {/* Section 1: Today's Spiritual Insight */}
-        <GlassCard borderRadius={16} style={styles.sectionCard}>
+        <View style={styles.sectionCard}>
           <View style={styles.centeredSectionHeader}>
-            <AppIcon name="robot-outline" size={20} color={theme.colors.primary} />
-            <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+            <Text variant="titleMedium" style={[styles.sectionTitle, { color: '#FFFFFF', marginLeft: 0 }]}>
               Today's Spiritual Insight
             </Text>
           </View>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, lineHeight: 22 }}>
+          <Text variant="bodyMedium" style={{ color: 'rgba(255,255,255,0.85)', lineHeight: 24, textAlign: 'center' }}>
             "You have completed your Fajr prayer consistently this week.{'\n\n'}May Allah continue to strengthen your consistency.{'\n\n'}Today's focus is Asr.{'\n\n'}Try to perform it at the earliest time today.{'\n\n'}Every sincere prayer brings you closer to Allah."
           </Text>
-        </GlassCard>
+        </View>
 
         {/* Section 2: Sunnah Reminder (previously Section 5) */}
-        <GlassCard borderRadius={16} style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <AppIcon name="star-crescent" size={20} color={theme.colors.primary} />
-            <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+        <View style={styles.sectionCard}>
+          <View style={styles.centeredSectionHeader}>
+            <AppIcon name="leaf" size={20} color="#8EDCB8" />
+            <Text variant="titleMedium" style={[styles.sectionTitle, { color: '#FFFFFF' }]}>
               Sunnah Reminder
             </Text>
           </View>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
+          <Text variant="bodyMedium" style={{ color: 'rgba(255,255,255,0.85)', textAlign: 'center' }}>
             Smile at someone today. It is an act of charity.
           </Text>
-        </GlassCard>
+        </View>
 
         {/* Bottom Actions */}
         <View style={styles.footerSection}>
-          <GlassButton 
-            label="Ask SalahMate AI" 
-            variant="primary" 
-            icon={<AppIcon name="robot" size={20} color={theme.colors.textOnPrimary} />}
+          <Pressable 
             onPress={onOpenChat}
-            style={{ width: '100%' }}
-          />
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && { opacity: 0.8 }
+            ]}
+          >
+            <AppIcon name="robot" size={20} color="#000000" />
+            <Text style={styles.actionButtonText}>Ask SalahMate AI</Text>
+          </Pressable>
         </View>
 
       </ScrollView>
@@ -111,6 +116,11 @@ const styles = StyleSheet.create({
   sectionCard: {
     marginBottom: spacing.md,
     padding: spacing.md,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderRadius: 18,
+    overflow: 'hidden',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -130,5 +140,20 @@ const styles = StyleSheet.create({
   footerSection: {
     marginTop: spacing.md,
     marginBottom: spacing.lg,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#8EDCB8',
+    borderRadius: 14,
+    paddingVertical: 14,
+    width: '100%',
+  },
+  actionButtonText: {
+    color: '#000000',
+    fontWeight: '700',
+    fontSize: 16,
+    marginLeft: spacing.sm,
   }
 });

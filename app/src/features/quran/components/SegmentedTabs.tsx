@@ -14,7 +14,7 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({ tabs, activeTab, o
   const theme = useTheme<SalahMateTheme>();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surfaceVariant }]}>
+    <View style={styles.container}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab;
         return (
@@ -23,14 +23,14 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({ tabs, activeTab, o
             onPress={() => onTabChange(tab)}
             style={[
               styles.tab,
-              isActive && [styles.activeTab, { backgroundColor: theme.colors.primary }]
+              isActive && styles.activeTab
             ]}
           >
             <Text 
               variant="labelMedium" 
               style={[
                 styles.tabText,
-                { color: isActive ? theme.colors.onPrimary : theme.colors.onSurfaceVariant },
+                { color: isActive ? '#8EDCB8' : 'rgba(255,255,255,0.7)' },
                 isActive && styles.activeTabText
               ]}
             >
@@ -50,6 +50,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginHorizontal: spacing.md,
     marginVertical: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   tab: {
     flex: 1,
@@ -59,10 +62,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   activeTab: {
+    backgroundColor: 'rgba(15, 76, 54, 0.8)',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 2,
   },
   tabText: {

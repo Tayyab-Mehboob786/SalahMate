@@ -1,8 +1,8 @@
 import React, { useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator, Pressable } from 'react-native';
-import { useTheme } from 'react-native-paper';
+import { useTheme, Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, GlassHeader, AppIcon } from '@/components';
+import { ScreenContainer, AppIcon } from '@/components';
 import { HistoryCard, EmptyHistory, HistorySkeleton } from '@/components/tracker/history';
 import { usePrayerHistory } from '@/hooks/prayer/usePrayerHistory';
 import { usePullToRefresh } from '@/hooks';
@@ -35,12 +35,29 @@ export default function PrayerHistoryScreen() {
   }, []);
 
   const renderFooter = () => {
-    if (!isFetchingNextPage) return <View style={{ height: 48 }} />;
-    return (
-      <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color={theme.colors.primary} />
-      </View>
-    );
+    if (isFetchingNextPage) {
+      return (
+        <View style={styles.footerLoader}>
+          <ActivityIndicator size="small" color="#FFFFFF" />
+        </View>
+      );
+    }
+    
+    if (hasNextPage) {
+      return (
+        <Pressable 
+          style={({ pressed }) => [
+            styles.viewMoreBtn,
+            pressed && { opacity: 0.8 }
+          ]}
+          onPress={loadNextPage}
+        >
+          <Text style={styles.viewMoreText}>View More</Text>
+        </Pressable>
+      );
+    }
+
+    return <View style={{ height: 48 }} />;
   };
 
   const renderContent = () => {
@@ -63,8 +80,6 @@ export default function PrayerHistoryScreen() {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         refreshControl={refreshControl}
-        onEndReached={loadNextPage}
-        onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
       />
@@ -72,29 +87,51 @@ export default function PrayerHistoryScreen() {
   };
 
   return (
-    <View style={[styles.mainWrapper, { backgroundColor: theme.colors.background }]}>
-      <ScreenContainer withGlassGradient withBrandWatermark>
-        <GlassHeader
-          title="Prayer History"
-          leftSlot={
-            <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
-              <AppIcon
-                name="arrow-left"
-                size="lg"
-                variant="onSurface"
-              />
-            </Pressable>
-          }
-        />
-        {renderContent()}
-      </ScreenContainer>
-    </View>
+    <ScreenContainer 
+      scrollable={false}
+      backgroundImage={require('../../assets/backgrounds/track-mosque.png')}
+    >
+      <View style={styles.headerWrapper}>
+        <Pressable 
+          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+          onPress={() => router.back()}
+        >
+          <AppIcon name="chevron-left" size={24} color="#FFFFFF" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Prayer History</Text>
+        <View style={{ width: 44, height: 44 }} />
+      </View>
+      {renderContent()}
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  mainWrapper: {
-    flex: 1,
+  headerWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  headerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   listContent: {
     paddingTop: spacing.md,
@@ -104,5 +141,21 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  viewMoreBtn: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewMoreText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

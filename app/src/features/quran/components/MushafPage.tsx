@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MushafPageData } from '../types/reader.types';
@@ -10,14 +10,30 @@ import type { SalahMateTheme } from '@/theme';
 interface MushafPageProps {
   data: MushafPageData;
   width: number;
+  fontSize?: number;
+  playingAyahId?: number | null;
+  targetSurahId?: number | null;
 }
 
-export const MushafPage: React.FC<MushafPageProps> = ({ data, width }) => {
+export const MushafPage: React.FC<MushafPageProps> = ({ 
+  data, 
+  width, 
+  fontSize = 24, 
+  playingAyahId,
+  targetSurahId 
+}) => {
   const theme = useTheme<SalahMateTheme>();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrolledRef = useRef(false);
+
+  // Reset scroll ref whenever page or target surah changes
+  useEffect(() => {
+    scrolledRef.current = false;
+  }, [data.pageNumber, targetSurahId]);
 
   // Determine paper background color based on theme
-  const paperColor = theme.dark ? '#1E1E1E' : '#FDFBF7';
-  const textColor = theme.dark ? '#E0E0E0' : '#2C2C2C';
+  const paperColor = 'transparent'; // Let the screen background image show through
+  const textColor = '#F5D061'; // Gold text for a premium look
 
   // Group Ayahs by Surah to insert headers correctly
   const renderContent = () => {
@@ -28,28 +44,58 @@ export const MushafPage: React.FC<MushafPageProps> = ({ data, width }) => {
       // Insert Surah Header and Bismillah if surah changes
       if (ayah.surahId !== currentSurahId) {
         currentSurahId = ayah.surahId;
-        const surahInfo = data.surahs.find((s) => s.id === currentSurahId);
+        
+        // Only render header and Bismillah if this is the start of the Surah
+        if (ayah.ayahNumber === 1) {
+          const surahInfo = data.surahs.find((s) => s.id === currentSurahId);
 
-        if (surahInfo) {
-          content.push(<SurahHeader key={`header-${surahInfo.id}`} surah={surahInfo} />);
-          
-          // Render Bismillah (Except for Tawbah which is ID 9)
-          if (surahInfo.id !== 9 && surahInfo.id !== 1) { // Fatihah (1) has Bismillah as Ayah 1 usually
+          if (surahInfo) {
+            const isTargetSurah = targetSurahId && surahInfo.id === targetSurahId;
+
             content.push(
-              <Text key={`bismillah-${surahInfo.id}`} style={[styles.bismillah, { color: textColor }]}>
-                بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-              </Text>
+              <View 
+                key={`header-${surahInfo.id}`}
+                onLayout={(e) => {
+                  if (isTargetSurah && !scrolledRef.current) {
+                    scrolledRef.current = true;
+                    const y = e.nativeEvent.layout.y;
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 8), animated: false });
+                    }, 50);
+                  }
+                }}
+              >
+                <SurahHeader surah={surahInfo} />
+              </View>
             );
+            
+            // Render Bismillah (Except for Tawbah which is ID 9)
+            if (surahInfo.id !== 9 && surahInfo.id !== 1) { // Fatihah (1) has Bismillah as Ayah 1 usually
+              content.push(
+                <Text key={`bismillah-${surahInfo.id}`} style={[styles.bismillah, { color: textColor }]}>
+                  بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                </Text>
+              );
+            }
           }
         }
       }
 
       // Append Ayah with its number marker
+      const isPlaying = ayah.id === playingAyahId;
       content.push(
-        <View key={`ayah-${ayah.id}`} style={styles.ayahContainer}>
-          <Text style={[styles.ayahText, { color: textColor }]}>
-            {ayah.textArabic} <Text style={[styles.ayahNumber, { color: theme.colors.primary }]}>﴿{ayah.ayahNumber}﴾</Text>
+        <View 
+          key={`ayah-${ayah.id}`} 
+          style={[styles.ayahContainer, isPlaying && styles.activeAyah]}
+        >
+          <Text style={[styles.ayahText, { color: textColor, fontSize, lineHeight: fontSize * 1.7 }]}>
+            {ayah.textArabic} <Text style={[styles.ayahNumber, { color: '#8EDCB8', fontSize: fontSize * 0.8 }]}>﴿{ayah.ayahNumber}﴾</Text>
           </Text>
+          {ayah.translation && (
+            <Text style={[styles.translationText, { fontSize: Math.max(14, fontSize * 0.65) }]}>
+              {ayah.translation.replace(/<[^>]*>?/gm, '')}
+            </Text>
+          )}
         </View>
       );
     });
@@ -59,11 +105,12 @@ export const MushafPage: React.FC<MushafPageProps> = ({ data, width }) => {
 
   return (
     <View style={[styles.pageContainer, { width, backgroundColor: paperColor }]}>
-      {/* Decorative Border Frame */}
-      <View style={[styles.frame, { borderColor: theme.dark ? '#333333' : '#E8E2D2' }]}>
+      {/* Decorative Border Frame -> Now Glass Panel */}
+      <View style={styles.frame}>
         <PageIndicator pageNumber={data.pageNumber} />
         
         <ScrollView 
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={false}
@@ -85,8 +132,10 @@ const styles = StyleSheet.create({
   },
   frame: {
     flex: 1,
-    borderWidth: 2,
-    borderRadius: 8,
+    borderWidth: 1,
+    borderRadius: 24,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     margin: spacing.xs,
     padding: spacing.md,
     position: 'relative',
@@ -99,11 +148,14 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   ayahContainer: {
-    paddingVertical: spacing.md,
+    padding: spacing.md,
     marginBottom: spacing.md,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start', // Because text is RTL naturally or we set text alignment
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    borderRadius: 12,
+  },
+  activeAyah: {
+    backgroundColor: 'rgba(142, 220, 184, 0.15)', // Subtle green highlight
   },
   bismillah: {
     fontSize: 24,
@@ -113,13 +165,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   ayahText: {
-    fontSize: 28, // Large typography for easy reading
     fontFamily: 'sans-serif', // Fallback to system font, Uthmani added later
-    lineHeight: 48, // Allows natural spacing within the block
     writingDirection: 'rtl',
     textAlign: 'right', // Forces RTL visual flow
   },
   ayahNumber: {
-    fontSize: 22,
+    // sizing is handled inline
+  },
+  translationText: {
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: spacing.sm,
+    fontFamily: 'sans-serif',
+    textAlign: 'auto',
   },
 });

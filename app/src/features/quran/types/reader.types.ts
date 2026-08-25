@@ -3,6 +3,8 @@ export interface Ayah {
   surahId: number;
   ayahNumber: number;
   textArabic: string;
+  translation?: string;
+  audioUrl?: string;
 }
 
 export interface SurahInfo {

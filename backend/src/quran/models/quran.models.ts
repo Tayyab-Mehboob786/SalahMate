@@ -16,6 +16,8 @@ export interface Ayah {
   pageNumber: number;
   juzNumber: number;
   hizbNumber: number;
+  translation?: string;
+  audioUrl?: string;
 }
 
 export interface Page {
@@ -44,7 +46,7 @@ export interface Translation {
 export interface Reciter {
   id: number;
   name: string;
-  style: string;
+  style: string | null;
 }
 
 export interface Bookmark {

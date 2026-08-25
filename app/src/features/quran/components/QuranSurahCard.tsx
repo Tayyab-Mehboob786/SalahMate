@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { GlassCard, AppIcon } from '@/components';
+import { AppIcon } from '@/components';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 
@@ -28,11 +28,11 @@ export const QuranSurahCard: React.FC<QuranSurahCardProps> = ({ surah, onPress }
     <Pressable onPress={onPress}>
       {({ pressed }) => (
         <View style={[styles.container, pressed && { transform: [{ scale: 0.97 }] }]}>
-          <GlassCard style={styles.card}>
+          <View style={styles.card}>
             {surah.isRecent && (
-              <View style={[styles.recentBadge, { backgroundColor: `${theme.colors.primary}15` }]}>
-                <AppIcon name="clock-outline" size={14} color={theme.colors.primary} />
-                <Text style={[styles.recentText, { color: theme.colors.primary }]}>
+              <View style={[styles.recentBadge, { backgroundColor: 'rgba(142,220,184,0.15)' }]}>
+                <AppIcon name="clock-outline" size={14} color="#8EDCB8" />
+                <Text style={[styles.recentText, { color: '#8EDCB8' }]}>
                   Continue Reading
                 </Text>
               </View>
@@ -40,58 +40,53 @@ export const QuranSurahCard: React.FC<QuranSurahCardProps> = ({ surah, onPress }
 
             <View style={styles.contentRow}>
               {/* Number Badge */}
-              <View style={[styles.numberBadge, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
-                <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+              <View style={styles.numberBadge}>
+                <Text variant="titleMedium" style={{ color: '#8EDCB8', fontWeight: '700' }}>
                   {surah.id}
                 </Text>
               </View>
 
               {/* Name Details */}
               <View style={styles.details}>
-                <Text variant="titleMedium" style={[styles.nameSimple, { color: theme.colors.onSurface }]}>
+                <Text variant="titleMedium" style={styles.nameSimple}>
                   {surah.nameSimple}
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text variant="bodySmall" style={styles.nameTranslated}>
                   {surah.nameTranslated}
                 </Text>
               </View>
 
               {/* Arabic Name */}
               <View style={styles.arabicContainer}>
-                <Text variant="headlineSmall" style={[styles.nameArabic, { color: theme.colors.primary }]}>
+                <Text variant="headlineSmall" style={styles.nameArabic}>
                   {surah.nameArabic}
                 </Text>
               </View>
             </View>
 
             {/* Footer Metadata */}
-            <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+            <View style={styles.footer}>
               <View style={styles.metaBadge}>
                 <AppIcon 
                   name={(surah.revelationPlace === 'makkah' ? 'city' : 'mosque') as any} 
                   size={14} 
-                  color={theme.colors.onSurfaceVariant} 
+                  color="rgba(255,255,255,0.7)" 
                 />
-                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {surah.revelationPlace === 'makkah' ? 'Makki' : 'Madani'}
+                <Text variant="labelSmall" style={styles.metaText}>
+                  {surah.revelationPlace === 'makkah' ? 'MAKKI' : 'MADANI'}
                 </Text>
               </View>
 
-              <View style={styles.metaBadge}>
-                <AppIcon name="book-open-outline" size={14} color={theme.colors.onSurfaceVariant} />
-                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {surah.versesCount} Ayahs
-                </Text>
-              </View>
+              <Text style={styles.metaDot}>•</Text>
 
               <View style={styles.metaBadge}>
-                <AppIcon name="bookmark-outline" size={14} color={theme.colors.onSurfaceVariant} />
-                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Juz {surah.juzNumber}
+                <AppIcon name="format-list-bulleted" size={14} color="rgba(255,255,255,0.7)" />
+                <Text variant="labelSmall" style={styles.metaText}>
+                  {surah.versesCount} AYAHS
                 </Text>
               </View>
             </View>
-          </GlassCard>
+          </View>
         </View>
       )}
     </Pressable>
@@ -104,8 +99,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   card: {
-    padding: spacing.md,
+    padding: spacing.lg,
     borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   recentBadge: {
     flexDirection: 'row',
@@ -130,7 +128,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -141,6 +141,10 @@ const styles = StyleSheet.create({
   nameSimple: {
     fontWeight: '700',
     marginBottom: 2,
+    color: '#FFFFFF',
+  },
+  nameTranslated: {
+    color: 'rgba(255,255,255,0.7)',
   },
   arabicContainer: {
     paddingLeft: spacing.md,
@@ -149,17 +153,28 @@ const styles = StyleSheet.create({
   nameArabic: {
     fontFamily: 'sans-serif', // Placeholder for Arabic font
     fontWeight: '500',
+    color: '#F5D061',
   },
   footer: {
     flexDirection: 'row',
+    alignItems: 'center',
     marginTop: spacing.md,
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    gap: spacing.lg,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    gap: spacing.sm,
   },
   metaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  metaText: {
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.5,
+  },
+  metaDot: {
+    color: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 4,
   }
 });

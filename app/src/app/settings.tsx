@@ -1,28 +1,85 @@
-/**
- * SalahMate Global Settings Screen (`/settings`)
- *
- * Apple Health inspired settings modal for customizing calculation methods,
- * prayer notification alerts, Asr juristic preferences, and theme appearance.
- */
-
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet, View, ScrollView } from 'react-native';
+import { useRouter, Stack } from 'expo-router';
 import { Text, useTheme } from 'react-native-paper';
-import { AppIcon, GlassCard, ScreenContainer, Switch, LocationPickerBottomSheet, OptionsPickerBottomSheet, PickerOption } from '@/components';
-import { useAppTheme, useLocation, useSettings, useNotifications } from '@/context';
+import { AppIcon, ScreenContainer, LocationPickerBottomSheet, OptionsPickerBottomSheet, PickerOption } from '@/components';
+import { useLocation, useSettings, useNotifications } from '@/context';
 import { spacing } from '@/theme';
-import type { SalahMateTheme } from '@/theme';
+import { BlurView } from 'expo-blur';
+import { Switch as RNSwitch } from 'react-native';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { usersApi } from '@/api/users.api';
+
+// Custom toggle matching the green apple-style design
+const GlassToggle = ({ value, onValueChange, disabled = false }: any) => {
+  return (
+    <RNSwitch
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#4ADE80' }}
+      thumbColor="#FFFFFF"
+      ios_backgroundColor="rgba(255,255,255,0.2)"
+    />
+  );
+};
+
+// Reusable setting row component for uniform look
+const GlassSettingRow = ({ 
+  label, 
+  description, 
+  icon, 
+  rightElement, 
+  onPress,
+  isLast = false,
+  customLabelStyle,
+  customDescStyle
+}: any) => {
+  const inner = (
+    <>
+      <View style={styles.rowLeft}>
+        {icon && <AppIcon name={icon} size={24} color="#FFFFFF" style={styles.rowIcon} />}
+        <View style={styles.rowTextContainer}>
+          <Text style={[styles.rowLabel, customLabelStyle]}>{label}</Text>
+          {description && (
+            <Text style={[styles.rowDesc, customDescStyle]} numberOfLines={2}>
+              {description}
+            </Text>
+          )}
+        </View>
+      </View>
+      <View style={styles.rowRight}>
+        {rightElement}
+      </View>
+    </>
+  );
+
+  return (
+    <View style={styles.rowWrapper}>
+      {onPress ? (
+        <Pressable 
+          style={({ pressed }) => [styles.rowContent, pressed && { opacity: 0.6 }]} 
+          onPress={onPress}
+        >
+          {inner}
+        </Pressable>
+      ) : (
+        <View style={styles.rowContent}>
+          {inner}
+        </View>
+      )}
+      {!isLast && <View style={styles.divider} />}
+    </View>
+  );
+};
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const theme = useTheme<SalahMateTheme>();
-  const { themeMode, setThemeMode } = useAppTheme();
   const { location, isAuto, isDetecting, setAutoLocation, refreshLocation } = useLocation();
   const { settings, updateSetting } = useSettings();
   const { notificationsEnabled, sendTestNotification } = useNotifications();
+  const { user, refreshUser } = useAuth();
   const [isPickerVisible, setIsPickerVisible] = useState(false);
-
   const [activePicker, setActivePicker] = useState<'calc' | 'juristic' | 'time' | 'hijri' | null>(null);
 
   // Settings Definitions
@@ -38,502 +95,417 @@ export default function SettingsScreen() {
   ];
 
   const juristicMethods: PickerOption<number>[] = [
-    { label: 'Standard', value: 0, description: "Shafi'i, Maliki, Hanbali (Shadow 1x)" },
-    { label: 'Hanafi', value: 1, description: 'Later Asr time (Shadow 2x)' },
+    { label: 'Standard', value: 0, description: "Shafi'i, Maliki, Hanbali" },
+    { label: 'Hanafi', value: 1, description: 'Later Asr time' },
   ];
 
   const timeFormats: PickerOption<'12h' | '24h'>[] = [
-    { label: '12-Hour (AM/PM)', value: '12h' },
+    { label: '12-Hour', value: '12h' },
     { label: '24-Hour', value: '24h' },
   ];
 
   const hijriAdjustments: PickerOption<number>[] = [
     { label: '+2 Days', value: 2 },
     { label: '+1 Day', value: 1 },
-    { label: '0 Days (Default)', value: 0 },
+    { label: '0 Days', value: 0 },
     { label: '-1 Day', value: -1 },
     { label: '-2 Days', value: -2 },
   ];
 
-  // Interactive toggle states
+  // Interactive toggle states (preserving existing local states)
   const [notifications, setNotifications] = useState(true);
   const [adhanSound, setAdhanSound] = useState(true);
   const [haptics, setHaptics] = useState(true);
-  const [highLatitude, setHighLatitude] = useState(true);
+  
+  // Theme state
+  const [themeValue, setThemeValue] = useState(user?.theme || 'light');
+  const handleThemeChange = async (val: string) => {
+    setThemeValue(val);
+    try {
+      if (user) {
+        await usersApi.updateProfile({ theme: val } as any);
+        await refreshUser();
+      }
+    } catch (e) {
+      console.warn("Theme update failed", e);
+    }
+  };
+
+  const activeLocationStr = location?.city && location?.country 
+    ? `${location.city}, ${location.country}` 
+    : 'Unknown';
+
+  const themeOptions = ['Light', 'Dark', 'Auto'];
 
   return (
     <>
-      <ScreenContainer scrollable withPadding withGlassGradient>
-      <View style={styles.content}>
-        {/* Location Card */}
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          PRAYER LOCATION
-        </Text>
-        <GlassCard borderRadius={20} style={{ marginBottom: spacing.xl }}>
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
-            <View style={styles.labelBox}>
-              <AppIcon name="crosshairs-gps" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Use Current Location
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  {isAuto ? 'Automatically update via GPS' : 'GPS disabled'}
-                </Text>
-              </View>
-            </View>
-            <Switch value={isAuto} onValueChange={setAutoLocation} />
-          </View>
-          
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
-            <View style={styles.labelBox}>
-              <AppIcon name="map-marker" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Active Location
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  {location?.city || 'Unknown'}, {location?.country || ''}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {isAuto ? (
-            <Pressable 
-              style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}
-              onPress={refreshLocation}
-              disabled={isDetecting}
-            >
-              <AppIcon name={isDetecting ? "sync" : "refresh"} size={20} variant="primary" />
-              <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '600', marginLeft: spacing.sm }}>
-                {isDetecting ? 'Detecting Location...' : 'Refresh Current Location'}
-              </Text>
-            </Pressable>
-          ) : (
-            <Pressable 
-              style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}
-              onPress={() => setIsPickerVisible(true)}
-            >
-              <AppIcon name="magnify" size={20} variant="primary" />
-              <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '600', marginLeft: spacing.sm }}>
-                Search City
-              </Text>
-            </Pressable>
-          )}
-        </GlassCard>
-
-        {/* Appearance Mode Selector */}
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          APPEARANCE
-        </Text>
-        <GlassCard borderRadius={20} style={styles.appearanceCard}>
-          <View style={styles.themeOptionsContainer}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.themeOptionChip,
-                {
-                  backgroundColor:
-                    themeMode === 'light'
-                      ? theme.colors.primary
-                      : theme.colors.surfaceVariant,
-                  borderColor:
-                    themeMode === 'light'
-                      ? theme.colors.primary
-                      : theme.colors.border,
-                },
-                pressed && { opacity: 0.8 },
-              ]}
-              onPress={() => setThemeMode('light')}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: themeMode === 'light' }}
-              accessibilityLabel="Light Theme Mode"
-            >
-              <AppIcon
-                name="weather-sunny"
-                size={22}
-                color={themeMode === 'light' ? theme.colors.textOnPrimary : theme.colors.onSurface}
-              />
-              <Text
-                variant="labelLarge"
-                style={[
-                  styles.themeOptionText,
-                  { color: themeMode === 'light' ? theme.colors.textOnPrimary : theme.colors.onSurface },
-                ]}
-              >
-                Light
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.themeOptionChip,
-                {
-                  backgroundColor:
-                    themeMode === 'dark'
-                      ? theme.colors.primary
-                      : theme.colors.surfaceVariant,
-                  borderColor:
-                    themeMode === 'dark'
-                      ? theme.colors.primary
-                      : theme.colors.border,
-                },
-                pressed && { opacity: 0.8 },
-              ]}
-              onPress={() => setThemeMode('dark')}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: themeMode === 'dark' }}
-              accessibilityLabel="Dark Theme Mode"
-            >
-              <AppIcon
-                name="weather-night"
-                size={22}
-                color={themeMode === 'dark' ? theme.colors.textOnPrimary : theme.colors.onSurface}
-              />
-              <Text
-                variant="labelLarge"
-                style={[
-                  styles.themeOptionText,
-                  { color: themeMode === 'dark' ? theme.colors.textOnPrimary : theme.colors.onSurface },
-                ]}
-              >
-                Dark
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.themeOptionChip,
-                {
-                  backgroundColor:
-                    themeMode === 'auto'
-                      ? theme.colors.primary
-                      : theme.colors.surfaceVariant,
-                  borderColor:
-                    themeMode === 'auto'
-                      ? theme.colors.primary
-                      : theme.colors.border,
-                },
-                pressed && { opacity: 0.8 },
-              ]}
-              onPress={() => setThemeMode('auto')}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: themeMode === 'auto' }}
-              accessibilityLabel="Auto System Theme Mode"
-            >
-              <AppIcon
-                name="theme-light-dark"
-                size="md"
-                color={themeMode === 'auto' ? theme.colors.textOnPrimary : theme.colors.onSurface}
-              />
-              <Text
-                variant="labelLarge"
-                style={[
-                  styles.themeOptionText,
-                  { color: themeMode === 'auto' ? theme.colors.textOnPrimary : theme.colors.onSurface },
-                ]}
-              >
-                Auto
-              </Text>
-            </Pressable>
-          </View>
-          <View style={styles.themeDescContainer}>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
-              {themeMode === 'light'
-                ? 'Soft white & emerald light theme always active.'
-                : themeMode === 'dark'
-                ? 'Charcoal & emerald dark theme always active.'
-                : 'Automatically follows your operating system theme preference.'}
-            </Text>
-          </View>
-        </GlassCard>
-
-
-        {/* Notifications Card */}
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          NOTIFICATIONS & ALERTS
-        </Text>
-        <GlassCard borderRadius={20}>
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
-            <View style={styles.labelBox}>
-              <AppIcon name="bell-ring-outline" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Prayer Notifications
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  Receive reminders when Adhan begins
-                </Text>
-              </View>
-            </View>
-            <Switch value={notifications} onValueChange={setNotifications} />
-          </View>
-
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
-            <View style={styles.labelBox}>
-              <AppIcon name="volume-high" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Full Adhan Audio
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  Play soothing Adhan instead of standard chime
-                </Text>
-              </View>
-            </View>
-            <Switch value={adhanSound} onValueChange={setAdhanSound} disabled={!notifications} />
-          </View>
-
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
-            <View style={styles.labelBox}>
-              <AppIcon name="vibrate" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Tactile Haptics
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  Vibrate gently upon logging prayers
-                </Text>
-              </View>
-            </View>
-            <Switch value={haptics} onValueChange={setHaptics} />
-          </View>
-
-          <Pressable 
-            style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}
-            onPress={() => sendTestNotification(2)}
-            disabled={!notificationsEnabled}
-          >
-            <AppIcon name="bell-plus" size={20} color={notificationsEnabled ? theme.colors.primary : theme.colors.onSurfaceVariant} />
-            <Text variant="bodyMedium" style={{ color: notificationsEnabled ? theme.colors.primary : theme.colors.onSurfaceVariant, fontWeight: '600', marginLeft: spacing.sm }}>
-              {notificationsEnabled ? 'Send Test Notification (2s)' : 'Permissions Denied/Disabled'}
-            </Text>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenContainer 
+        scrollable={false} 
+        backgroundImage={require('../../assets/backgrounds/settings-mosque.png')}
+      >
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <AppIcon name="arrow-left" size={24} color="#FFFFFF" />
           </Pressable>
-        </GlassCard>
-
-        {/* Calculation Methods Card */}
-        <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          CALCULATION METHODS
-        </Text>
-        <GlassCard borderRadius={20}>
-          <Pressable 
-            style={({ pressed }) => [styles.settingRow, { borderBottomColor: theme.colors.border }, pressed && { opacity: 0.7 }]}
-            onPress={() => setActivePicker('calc')}
-          >
-            <View style={styles.labelBox}>
-              <AppIcon name="compass-outline" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Convention
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  {calcMethods.find(m => m.value === settings.prayerMethod)?.label || 'Muslim World League'}
-                </Text>
-              </View>
-            </View>
-            <AppIcon name="chevron-right" size="lg" variant="secondary" />
-          </Pressable>
-
-          <Pressable 
-            style={({ pressed }) => [styles.settingRow, { borderBottomColor: theme.colors.border }, pressed && { opacity: 0.7 }]}
-            onPress={() => setActivePicker('juristic')}
-          >
-            <View style={styles.labelBox}>
-              <AppIcon name="weather-partly-cloudy" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Asr Juristic Method
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  {juristicMethods.find(m => m.value === settings.juristicMethod)?.label || 'Standard'}
-                </Text>
-              </View>
-            </View>
-            <AppIcon name="chevron-right" size="lg" variant="secondary" />
-          </Pressable>
-
-          <Pressable 
-            style={({ pressed }) => [styles.settingRow, { borderBottomColor: theme.colors.border }, pressed && { opacity: 0.7 }]}
-            onPress={() => setActivePicker('time')}
-          >
-            <View style={styles.labelBox}>
-              <AppIcon name="clock-outline" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Time Format
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  {settings.timeFormat === '12h' ? '12-Hour (AM/PM)' : '24-Hour'}
-                </Text>
-              </View>
-            </View>
-            <AppIcon name="chevron-right" size="lg" variant="secondary" />
-          </Pressable>
-
-          <Pressable 
-            style={({ pressed }) => [styles.settingRowLast, pressed && { opacity: 0.7 }]}
-            onPress={() => setActivePicker('hijri')}
-          >
-            <View style={styles.labelBox}>
-              <AppIcon name="calendar-sync" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  Hijri Adjustment
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  {settings.hijriAdjustment > 0 ? `+${settings.hijriAdjustment}` : settings.hijriAdjustment} Days
-                </Text>
-              </View>
-            </View>
-            <AppIcon name="chevron-right" size="lg" variant="secondary" />
-          </Pressable>
-
-          <View style={styles.settingRowLast}>
-            <View style={styles.labelBox}>
-              <AppIcon name="earth" size={22} variant="primary" />
-              <View style={styles.textContainer}>
-                <Text variant="bodyLarge" style={[styles.labelText, { color: theme.colors.onSurface }]}>
-                  High Latitude Adjustment
-                </Text>
-                <Text variant="bodySmall" style={[styles.textDesc, { color: theme.colors.onSurfaceVariant }]}>
-                  Middle of the Night rule for extreme regions
-                </Text>
-              </View>
-            </View>
-            <Switch value={highLatitude} onValueChange={setHighLatitude} />
-          </View>
-        </GlassCard>
-
-        <View style={styles.footer}>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
-            SalahMate v2.4.0 (Build 2026.07) · Crafted with Barakah
-          </Text>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <View style={{ width: 44 }} />
         </View>
-      </View>
-    </ScreenContainer>
-    <LocationPickerBottomSheet visible={isPickerVisible} onDismiss={() => setIsPickerVisible(false)} />
-    
-    <OptionsPickerBottomSheet
-      visible={activePicker === 'calc'}
-      onDismiss={() => setActivePicker(null)}
-      title="Calculation Method"
-      options={calcMethods}
-      selectedValue={settings.prayerMethod}
-      onSelect={(val) => updateSetting('prayerMethod', val)}
-    />
-    
-    <OptionsPickerBottomSheet
-      visible={activePicker === 'juristic'}
-      onDismiss={() => setActivePicker(null)}
-      title="Asr Juristic Method"
-      options={juristicMethods}
-      selectedValue={settings.juristicMethod}
-      onSelect={(val) => updateSetting('juristicMethod', val)}
-    />
-    
-    <OptionsPickerBottomSheet
-      visible={activePicker === 'time'}
-      onDismiss={() => setActivePicker(null)}
-      title="Time Format"
-      options={timeFormats}
-      selectedValue={settings.timeFormat}
-      onSelect={(val) => updateSetting('timeFormat', val)}
-    />
-    
-    <OptionsPickerBottomSheet
-      visible={activePicker === 'hijri'}
-      onDismiss={() => setActivePicker(null)}
-      title="Hijri Adjustment"
-      options={hijriAdjustments}
-      selectedValue={settings.hijriAdjustment}
-      onSelect={(val) => updateSetting('hijriAdjustment', val)}
-    />
+
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+        >
+          {/* PRAYER LOCATION SECTION */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>PRAYER LOCATION</Text>
+            <View style={styles.glassCardWrapper}>
+              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={styles.glassCardInner}>
+                <GlassSettingRow
+                  icon="crosshairs-gps"
+                  label="Use Current Location"
+                  description={isAuto ? 'Automatically update via GPS' : 'GPS disabled'}
+                  rightElement={<GlassToggle value={isAuto} onValueChange={setAutoLocation} />}
+                />
+                <GlassSettingRow
+                  icon="map-marker"
+                  label="Active Location"
+                  description={activeLocationStr}
+                />
+                {isAuto ? (
+                  <Pressable 
+                    style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}
+                    onPress={refreshLocation}
+                    disabled={isDetecting}
+                  >
+                    <AppIcon name={isDetecting ? "sync" : "refresh"} size={20} color="#FFFFFF" />
+                    <Text style={styles.actionRowText}>{isDetecting ? 'Detecting...' : 'Refresh Current Location'}</Text>
+                  </Pressable>
+                ) : (
+                  <Pressable 
+                    style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}
+                    onPress={() => setIsPickerVisible(true)}
+                  >
+                    <AppIcon name="magnify" size={20} color="#FFFFFF" />
+                    <Text style={styles.actionRowText}>Search City</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* APPEARANCE SECTION REMOVED */}
+
+          {/* NOTIFICATIONS & ALERTS SECTION */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>NOTIFICATIONS & ALERTS</Text>
+            <View style={styles.glassCardWrapper}>
+              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={styles.glassCardInner}>
+                <GlassSettingRow
+                  label="Prayer Notifications"
+                  rightElement={
+                    <View style={styles.toggleWithIcon}>
+                      <GlassToggle value={notifications} onValueChange={setNotifications} />
+                      <AppIcon name="bell-outline" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                    </View>
+                  }
+                />
+                <GlassSettingRow
+                  label="Full Adhan Audio"
+                  isLast
+                  rightElement={
+                    <View style={styles.toggleWithIcon}>
+                      <GlassToggle value={adhanSound} onValueChange={setAdhanSound} disabled={!notifications} />
+                      <AppIcon name="volume-high" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                    </View>
+                  }
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* CALCULATION METHODS SECTION */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>CALCULATION METHODS</Text>
+            <View style={styles.glassCardWrapper}>
+              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={styles.glassCardInner}>
+                <GlassSettingRow
+                  icon="compass-outline"
+                  label="Convention"
+                  description={calcMethods.find(m => m.value === settings.prayerMethod)?.label || 'Muslim World League'}
+                  onPress={() => setActivePicker('calc')}
+                  rightElement={
+                    <View style={styles.rowRightClickable}>
+                      <AppIcon name="chevron-right" size={24} color="rgba(255,255,255,0.5)" />
+                    </View>
+                  }
+                />
+                <GlassSettingRow
+                  icon="human-handsdown"
+                  label="Asr Juristic Method"
+                  description={juristicMethods.find(m => m.value === settings.juristicMethod)?.label || 'Standard'}
+                  onPress={() => setActivePicker('juristic')}
+                  rightElement={
+                    <View style={styles.rowRightClickable}>
+                      <AppIcon name="chevron-right" size={24} color="rgba(255,255,255,0.5)" />
+                    </View>
+                  }
+                />
+                <GlassSettingRow
+                  icon="clock-outline"
+                  label="Time Format"
+                  description={settings.timeFormat === '12h' ? '12-Hour' : '24-Hour'}
+                  onPress={() => setActivePicker('time')}
+                  rightElement={
+                    <View style={styles.rowRightClickable}>
+                      <AppIcon name="chevron-right" size={24} color="rgba(255,255,255,0.5)" />
+                    </View>
+                  }
+                />
+                <GlassSettingRow
+                  icon="calendar-text-outline"
+                  label="Hijri Adjustment"
+                  description={`${settings.hijriAdjustment > 0 ? '+' : ''}${settings.hijriAdjustment} Days`}
+                  isLast
+                  onPress={() => setActivePicker('hijri')}
+                  rightElement={
+                    <View style={styles.rowRightClickable}>
+                      <AppIcon name="chevron-right" size={24} color="rgba(255,255,255,0.5)" />
+                    </View>
+                  }
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              SalahMate v1.0.0 (Build 2026.07) · Crafted with Barakah
+            </Text>
+          </View>
+        </ScrollView>
+      </ScreenContainer>
+
+      {/* Pickers (kept identical) */}
+      <LocationPickerBottomSheet visible={isPickerVisible} onDismiss={() => setIsPickerVisible(false)} />
+      
+      <OptionsPickerBottomSheet
+        visible={activePicker === 'calc'}
+        onDismiss={() => setActivePicker(null)}
+        title="Calculation Method"
+        options={calcMethods}
+        selectedValue={settings.prayerMethod}
+        onSelect={(val) => updateSetting('prayerMethod', val)}
+      />
+      
+      <OptionsPickerBottomSheet
+        visible={activePicker === 'juristic'}
+        onDismiss={() => setActivePicker(null)}
+        title="Asr Juristic Method"
+        options={juristicMethods}
+        selectedValue={settings.juristicMethod}
+        onSelect={(val) => updateSetting('juristicMethod', val)}
+      />
+      
+      <OptionsPickerBottomSheet
+        visible={activePicker === 'time'}
+        onDismiss={() => setActivePicker(null)}
+        title="Time Format"
+        options={timeFormats}
+        selectedValue={settings.timeFormat}
+        onSelect={(val) => updateSetting('timeFormat', val)}
+      />
+      
+      <OptionsPickerBottomSheet
+        visible={activePicker === 'hijri'}
+        onDismiss={() => setActivePicker(null)}
+        title="Hijri Adjustment"
+        options={hijriAdjustments}
+        selectedValue={settings.hijriAdjustment}
+        onSelect={(val) => updateSetting('hijriAdjustment', val)}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  headerTitle: {
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    paddingVertical: 2,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  sectionContainer: {
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    marginTop: spacing.sm,
-    marginLeft: spacing.xs,
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginLeft: 8,
+    letterSpacing: 0.5,
   },
-  settingRow: {
+  glassCardWrapper: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.4)', // Emerald green border
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)', // Dark frosted background
+  },
+  glassCardInner: {
+    // padding applied in row or specific sections
+  },
+  
+  // Row Styles
+  rowWrapper: {
+    width: '100%',
+  },
+  rowContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 60,
   },
-  settingRowLast: {
+  rowLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    flex: 1,
+    paddingRight: 12,
   },
+  rowIcon: {
+    marginRight: 12,
+  },
+  rowTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  rowLabel: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  rowDesc: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+  },
+  rowRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  rowRightClickable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rightValueText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginLeft: 52,
+  },
+  
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: 14,
   },
-  labelBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    flex: 1,
-    flexShrink: 1,
-    marginRight: spacing.md,
-  },
-  textContainer: {
-    flex: 1,
-    flexShrink: 1,
-  },
-  labelText: {
+  actionRowText: {
+    color: '#FFFFFF',
     fontWeight: '600',
-    marginBottom: 2,
+    fontSize: 15,
+    marginLeft: 8,
   },
-  textDesc: {
-    color: '#636e72',
-    flexWrap: 'wrap',
-    flexShrink: 1,
-  },
-  appearanceCard: {
-    marginBottom: spacing.md,
-  },
-  themeOptionsContainer: {
+  // Custom specific elements
+  toggleWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
   },
-  themeOptionChip: {
-    flex: 1,
+  refreshBtn: {
+    alignItems: 'center',
+  },
+  refreshBtnText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    marginTop: 2,
+  },
+
+  // Segmented Control
+  segmentedControl: {
     flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.sm,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: spacing.xs,
   },
-  themeOptionText: {
+  segmentBtnActive: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  segmentBtnBorder: {
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255,255,255,0.15)',
+  },
+  segmentText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+    fontSize: 15,
+  },
+  segmentTextActive: {
+    color: '#FFFFFF',
     fontWeight: '700',
   },
-  themeDescContainer: {
-    paddingBottom: spacing.md,
-    paddingHorizontal: spacing.xs,
+  themeHint: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
   },
+
   footer: {
-    marginTop: spacing.md,
-    marginBottom: spacing['2xl'],
+    marginTop: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  footerText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    textAlign: 'center',
   },
 });

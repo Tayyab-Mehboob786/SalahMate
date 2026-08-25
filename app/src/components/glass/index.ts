@@ -5,6 +5,7 @@
  * `GlassHeader`, `GlassAvatar`, `GlassStatisticCard`, `GlassModal`, `GlassBottomSheet`).
  */
 
+export * from './GlassBackground';
 export * from './GlassCard';
 export * from './GlassButton';
 export * from './GlassHeader';

@@ -1,11 +1,10 @@
 import { AppIcon } from '@/components/common/AppIcon';
 import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, Pressable, TextInput } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { GlassBottomSheet } from '@/components/glass';
 import { useLocation, LocationData } from '@/context/LocationContext';
 import { spacing, shadows } from '@/theme';
-import type { SalahMateTheme } from '@/theme';
 
 interface LocationPickerBottomSheetProps {
   visible: boolean;
@@ -15,7 +14,6 @@ interface LocationPickerBottomSheetProps {
 import { useCitySearch } from '@/hooks/useCitySearch';
 
 export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps> = ({ visible, onDismiss }) => {
-  const theme = useTheme<SalahMateTheme>();
   const { setManualLocation, setAutoLocation, isAuto } = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const { results: filteredCities, isLoading } = useCitySearch(searchQuery);
@@ -41,14 +39,14 @@ export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps>
       visible={visible}
       onDismiss={onDismiss}
       title="Search City"
-      style={styles.bottomSheet}
+      style={[styles.bottomSheet, { backgroundColor: 'rgba(0,0,0,0.75)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }]}
     >
-      <View style={[styles.searchContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-        <AppIcon name="magnify" size={20} color={theme.colors.onSurfaceVariant} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }]}>
+        <AppIcon name="magnify" size={20} color="rgba(255,255,255,0.7)" style={styles.searchIcon} />
         <TextInput
-          style={[styles.searchInput, { color: theme.colors.onSurface }]}
+          style={[styles.searchInput, { color: '#FFFFFF' }]}
           placeholder="Search by city or country..."
-          placeholderTextColor={theme.colors.onSurfaceVariant}
+          placeholderTextColor="rgba(255,255,255,0.5)"
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={handleSubmitEditing}
@@ -58,48 +56,48 @@ export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps>
 
       <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
         <Pressable 
-          style={[styles.listItem, { borderBottomColor: theme.colors.border }]} 
+          style={[styles.listItem, { borderBottomColor: 'rgba(255,255,255,0.15)' }]} 
           onPress={handleSelectAuto}
         >
-          <View style={[styles.iconContainer, { backgroundColor: isAuto ? theme.colors.primaryContainer : theme.colors.surfaceVariant }]}>
+          <View style={[styles.iconContainer, { backgroundColor: isAuto ? 'rgba(142, 220, 184, 0.15)' : 'rgba(255,255,255,0.1)' }]}>
             <AppIcon 
               name="crosshairs-gps" 
               size={20} 
-              color={isAuto ? theme.colors.primary : theme.colors.onSurfaceVariant} 
+              color={isAuto ? '#8EDCB8' : 'rgba(255,255,255,0.7)'} 
             />
           </View>
           <View style={styles.listItemText}>
-            <Text variant="titleMedium" style={{ color: isAuto ? theme.colors.primary : theme.colors.onSurface, fontWeight: '600' }}>
+            <Text variant="titleMedium" style={{ color: isAuto ? '#8EDCB8' : '#FFFFFF', fontWeight: '600' }}>
               Current Location (GPS)
             </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.7)' }}>
               Automatically detect using device GPS
             </Text>
           </View>
           {isAuto && (
-            <AppIcon name="check" size={20} color={theme.colors.primary} />
+            <AppIcon name="check" size={20} color="#8EDCB8" />
           )}
         </Pressable>
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>Loading cities...</Text>
+            <Text variant="bodyMedium" style={{ color: 'rgba(255,255,255,0.7)' }}>Loading cities...</Text>
           </View>
         ) : (
           filteredCities.map((loc, index) => (
             <Pressable 
               key={`${loc.city}-${index}`}
-              style={[styles.listItem, { borderBottomColor: theme.colors.border }]} 
+              style={[styles.listItem, { borderBottomColor: 'rgba(255,255,255,0.15)' }]} 
               onPress={() => handleSelectCity(loc)}
             >
-              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <AppIcon name="map-marker" size={20} color={theme.colors.onSurfaceVariant} />
+              <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                <AppIcon name="map-marker" size={20} color="rgba(255,255,255,0.7)" />
               </View>
               <View style={styles.listItemText}>
-                <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '500' }}>
+                <Text variant="titleMedium" style={{ color: '#FFFFFF', fontWeight: '500' }}>
                   {loc.city}
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.7)' }}>
                   {loc.country}
                 </Text>
               </View>
@@ -108,7 +106,7 @@ export const LocationPickerBottomSheet: React.FC<LocationPickerBottomSheetProps>
         )}
         {searchQuery.length > 1 && !isLoading && filteredCities.length === 0 && (
           <View style={styles.loadingContainer}>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>No cities found for "{searchQuery}"</Text>
+            <Text variant="bodyMedium" style={{ color: 'rgba(255,255,255,0.7)' }}>No cities found for "{searchQuery}"</Text>
           </View>
         )}
         <View style={{ height: spacing.xl }} />

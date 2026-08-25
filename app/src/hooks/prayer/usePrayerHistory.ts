@@ -22,7 +22,7 @@ export function usePrayerHistory() {
         setIsFetchingNextPage(true);
       }
 
-      const response = await prayersApi.getHistory(page, 10);
+      const response = await prayersApi.getHistory(page, 7);
 
       setData((prev) => {
         if (page === 1) return response.data;

@@ -69,6 +69,12 @@ export const API_ENDPOINTS = {
     SEARCH: '/quran/search',
     TRANSLATIONS: '/quran/translations',
     AUDIO: '/quran/audio',
+  },
+
+  // Goals
+  GOALS: {
+    BASE: '/goals',
+    ACTIVE: '/goals/active',
   }
 } as const;
 

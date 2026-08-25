@@ -19,6 +19,9 @@ export interface GlassAvatarProps {
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
+  textColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
 }
 
 export const GlassAvatar: React.FC<GlassAvatarProps> = ({
@@ -28,6 +31,9 @@ export const GlassAvatar: React.FC<GlassAvatarProps> = ({
   icon,
   style,
   accessibilityLabel,
+  textColor,
+  backgroundColor,
+  borderColor,
 }) => {
   const theme = useTheme<SalahMateTheme>();
 
@@ -44,8 +50,8 @@ export const GlassAvatar: React.FC<GlassAvatarProps> = ({
           width: size,
           height: size,
           borderRadius,
-          backgroundColor: theme.dark ? 'rgba(25, 105, 140, 0.22)' : '#E8F4F8',
-          borderColor: theme.dark ? 'rgba(25, 105, 140, 0.30)' : 'rgba(25, 105, 140, 0.18)',
+          backgroundColor: backgroundColor ?? (theme.dark ? 'rgba(25, 105, 140, 0.22)' : '#E8F4F8'),
+          borderColor: borderColor ?? (theme.dark ? 'rgba(25, 105, 140, 0.30)' : 'rgba(25, 105, 140, 0.18)'),
         },
         shadows.sm,
         style,
@@ -60,7 +66,7 @@ export const GlassAvatar: React.FC<GlassAvatarProps> = ({
             style={[
               styles.initials,
               {
-                color: theme.dark ? '#7FC8E8' : '#145874',
+                color: textColor ?? (theme.dark ? '#7FC8E8' : '#145874'),
                 fontSize: size * 0.36,
               },
             ]}

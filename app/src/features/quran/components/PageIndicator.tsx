@@ -11,8 +11,8 @@ export const PageIndicator: React.FC<PageIndicatorProps> = ({ pageNumber }) => {
   const theme = useTheme<SalahMateTheme>();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surfaceVariant }]}>
-      <Text variant="labelMedium" style={[styles.text, { color: theme.colors.onSurface }]}>
+    <View style={styles.container}>
+      <Text variant="labelMedium" style={styles.text}>
         {pageNumber}
       </Text>
     </View>
@@ -24,14 +24,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -15, // To overlap border slightly
     alignSelf: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
     zIndex: 10,
   },
   text: {
     fontWeight: 'bold',
+    color: '#8EDCB8',
   },
 });

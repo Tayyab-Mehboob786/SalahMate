@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { GlassCard } from '@/components/glass/GlassCard';
 import { SkeletonBase } from '@/components/skeletons/SkeletonBase';
 import { spacing } from '@/theme';
 
@@ -8,7 +7,7 @@ export function HistorySkeleton() {
   return (
     <>
       {[1, 2, 3].map((key) => (
-        <GlassCard key={key} borderRadius={16} style={styles.card}>
+        <View key={key} style={styles.card}>
           <View style={styles.header}>
             <View>
               <SkeletonBase width={150} height={20} borderRadius={4} />
@@ -28,7 +27,7 @@ export function HistorySkeleton() {
           <View style={styles.footer}>
             <SkeletonBase width={200} height={14} borderRadius={4} />
           </View>
-        </GlassCard>
+        </View>
       ))}
     </>
   );
@@ -39,6 +38,10 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
     padding: spacing.md,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   header: {
     flexDirection: 'row',

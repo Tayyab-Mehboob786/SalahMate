@@ -12,18 +12,33 @@ export const getSurahs = async (): Promise<ApiSurah[]> => {
   return response.data;
 };
 
+export const getAudioReciters = async (): Promise<any[]> => {
+  const response = await apiClient.get<any[]>(API_ENDPOINTS.QURAN.AUDIO);
+  return response.data;
+};
+
 export const getSurah = async (id: number): Promise<ApiSurah> => {
   const response = await apiClient.get<ApiSurah>(`${API_ENDPOINTS.QURAN.SURAH}/${id}`);
   return response.data;
 };
 
-export const getPage = async (pageNumber: number): Promise<ApiPage> => {
-  const response = await apiClient.get<ApiPage>(`${API_ENDPOINTS.QURAN.PAGE}/${pageNumber}`);
+export const getPage = async (pageNumber: number, translation?: string, reciterId?: number): Promise<ApiPage> => {
+  const params: Record<string, string | number> = {};
+  if (translation && translation !== 'none') params.translation = translation;
+  if (reciterId) params.reciter = reciterId;
+  const response = await apiClient.get<ApiPage>(`${API_ENDPOINTS.QURAN.PAGE}/${pageNumber}`, {
+    params,
+  });
   return response.data;
 };
 
-export const getJuz = async (juzNumber: number): Promise<ApiJuz> => {
-  const response = await apiClient.get<ApiJuz>(`${API_ENDPOINTS.QURAN.JUZ}/${juzNumber}`);
+export const getJuz = async (juzNumber: number, translation?: string, reciterId?: number): Promise<ApiJuz> => {
+  const params: Record<string, string | number> = {};
+  if (translation && translation !== 'none') params.translation = translation;
+  if (reciterId) params.reciter = reciterId;
+  const response = await apiClient.get<ApiJuz>(`${API_ENDPOINTS.QURAN.JUZ}/${juzNumber}`, {
+    params,
+  });
   return response.data;
 };
 

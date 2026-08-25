@@ -29,8 +29,6 @@ export function OptionsPickerBottomSheet<T>({
   selectedValue,
   onSelect,
 }: OptionsPickerBottomSheetProps<T>) {
-  const theme = useTheme<SalahMateTheme>();
-
   return (
     <GlassBottomSheet
       visible={visible}
@@ -46,9 +44,8 @@ export function OptionsPickerBottomSheet<T>({
               key={index}
               style={({ pressed }) => [
                 styles.optionRow,
-                { borderBottomColor: theme.colors.border },
-                index === options.length - 1 && { borderBottomWidth: 0 },
-                pressed && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                isSelected ? styles.selectedRow : styles.normalRow,
+                pressed && { opacity: 0.8 },
               ]}
               onPress={() => {
                 onSelect(option.value);
@@ -59,20 +56,26 @@ export function OptionsPickerBottomSheet<T>({
                 <Text
                   variant="bodyLarge"
                   style={{
-                    color: isSelected ? theme.colors.primary : theme.colors.onSurface,
+                    color: isSelected ? '#4ADE80' : '#FFFFFF',
                     fontWeight: isSelected ? '700' : '500',
                   }}
                 >
                   {option.label}
                 </Text>
                 {option.description && (
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+                  <Text 
+                    variant="bodySmall" 
+                    style={{ 
+                      color: isSelected ? 'rgba(74, 222, 128, 0.85)' : 'rgba(255,255,255,0.7)', 
+                      marginTop: 2 
+                    }}
+                  >
                     {option.description}
                   </Text>
                 )}
               </View>
               {isSelected && (
-                <AppIcon name="check-circle" size={24} variant="primary" />
+                <AppIcon name="check-circle" size={24} color="#4ADE80" />
               )}
             </Pressable>
           );
@@ -86,6 +89,9 @@ const styles = StyleSheet.create({
   bottomSheet: {
     paddingHorizontal: 0,
     maxHeight: '80%',
+    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    borderWidth: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
@@ -96,7 +102,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.md,
+    marginVertical: 4,
+    borderRadius: 14,
+  },
+  normalRow: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  selectedRow: {
+    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.4)',
   },
   optionContent: {
     flex: 1,

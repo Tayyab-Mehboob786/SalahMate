@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { AppIcon } from '@/components/common/AppIcon';
-import type { SalahMateTheme } from '@/theme';
+import { Text } from 'react-native-paper';
 
 export type PrayerStatus = 'Completed' | 'Pending' | 'Missed' | 'Qada';
 
@@ -12,69 +10,47 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, style }: StatusBadgeProps) {
-  const theme = useTheme<SalahMateTheme>();
-
   const getStatusConfig = () => {
     switch (status) {
       case 'Completed':
         return {
-          icon: 'check-circle' as const,
-          color: theme.colors.success,
-          bgColor: theme.colors.primaryContainer,
-          textColor: theme.colors.onPrimaryContainer,
-        };
-      case 'Pending':
-        return {
-          icon: 'clock-outline' as const,
-          color: theme.colors.primary,
-          bgColor: theme.colors.surfaceVariant,
-          textColor: theme.colors.onSurfaceVariant,
-        };
-      case 'Missed':
-        return {
-          icon: 'close-circle-outline' as const,
-          color: theme.colors.error,
-          bgColor: theme.colors.errorContainer,
-          textColor: theme.colors.onErrorContainer,
+          text: '✓ PRAYED',
+          bgColor: '#DCFCE7', // Light green
+          textColor: '#15803D', // Dark green
         };
       case 'Qada':
         return {
-          icon: 'restore' as const,
-          color: theme.colors.warning,
-          bgColor: '#FFF3E0', // Dummy fallback for Qada bg
-          textColor: theme.colors.warning,
+          text: '⏱ QAZA',
+          bgColor: '#FEF3C7', // Light yellow / amber
+          textColor: '#B45309', // Dark yellow / amber
+        };
+      case 'Missed':
+        return {
+          text: '✕ MISSED',
+          bgColor: '#FEE2E2', // Light red
+          textColor: '#B91C1C', // Dark red
+        };
+      case 'Pending':
+        return {
+          text: 'PENDING',
+          bgColor: 'rgba(255, 255, 255, 0.2)',
+          textColor: '#FFFFFF',
         };
       default:
         return {
-          icon: 'circle-outline' as const,
-          color: theme.colors.disabled,
-          bgColor: theme.colors.surfaceVariant,
-          textColor: theme.colors.onSurfaceVariant,
+          text: 'UNKNOWN',
+          bgColor: '#E0E0E0',
+          textColor: '#424242',
         };
     }
   };
 
   const config = getStatusConfig();
 
-  // Override Qada bg for dark mode safely
-  if (status === 'Qada' && theme.dark) {
-    config.bgColor = '#4E342E';
-  }
-
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: config.bgColor, borderColor: config.color },
-        style,
-      ]}
-    >
-      <AppIcon name={config.icon as any} size={14} color={config.color} />
-      <Text
-        variant="labelSmall"
-        style={[styles.text, { color: config.textColor }]}
-      >
-        {status}
+    <View style={[styles.container, { backgroundColor: config.bgColor }, style]}>
+      <Text style={[styles.text, { color: config.textColor }]}>
+        {config.text}
       </Text>
     </View>
   );
@@ -82,18 +58,14 @@ export function StatusBadge({ status, style }: StatusBadgeProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    borderWidth: 1,
-    gap: 4,
+    alignSelf: 'flex-start',
   },
   text: {
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontWeight: '800',
     fontSize: 10,
+    letterSpacing: 0.5,
   },
 });

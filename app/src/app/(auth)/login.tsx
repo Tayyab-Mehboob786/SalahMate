@@ -1,33 +1,29 @@
 /**
  * SalahMate Login Screen (`/(auth)/login`)
- *
- * Modern Material Design 3 authentication screen built with our reusable form components.
- * Features full keyboard awareness, controlled form validation state readiness,
- * and clear navigation links for account signup and password recovery.
  */
 
 import React, { useState, useEffect } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View, Image, useWindowDimensions } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Button, Text, useTheme, Divider } from 'react-native-paper';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay } from 'react-native-reanimated';
 import {
-  Card,
-  PasswordInput,
-  PrimaryButton,
-  ScreenContainer,
-  SecondaryButton,
-  TextInput,
-} from '@/components';
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  View,
+  Image,
+  useWindowDimensions,
+  TextInput as RNTextInput,
+  Pressable
+} from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Text, ActivityIndicator } from 'react-native-paper';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay } from 'react-native-reanimated';
+import { ScreenContainer, AppIcon } from '@/components';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { spacing } from '@/theme';
-import type { SalahMateTheme } from '@/theme';
 import { authApi } from '@/api';
 import { storage } from '@/utils/storage';
+import { BlurView } from 'expo-blur';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const theme = useTheme<SalahMateTheme>();
   const { login } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -39,6 +35,7 @@ export default function LoginScreen() {
   const [passwordError, setPasswordError] = useState<string>('');
   const [serverError, setServerError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   // Animation values
   const logoOpacity = useSharedValue(0);
@@ -51,10 +48,8 @@ export default function LoginScreen() {
   useEffect(() => {
     logoOpacity.value = withTiming(1, { duration: 300 });
     logoScale.value = withTiming(1, { duration: 300 });
-
     headerOpacity.value = withDelay(100, withTiming(1, { duration: 300 }));
     headerTranslateY.value = withDelay(100, withTiming(0, { duration: 300 }));
-
     formOpacity.value = withDelay(250, withTiming(1, { duration: 300 }));
     formTranslateY.value = withDelay(250, withTiming(0, { duration: 300 }));
   }, []);
@@ -118,7 +113,7 @@ export default function LoginScreen() {
       // Temporarily inject header since no interceptors exist yet
       const apiClient = require('@/api/axios').default;
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${response.accessToken}`;
-      
+
       const userProfile = await authApi.getCurrentUser();
       console.log('[Login] GET /auth/me response received', userProfile.id);
 
@@ -151,123 +146,126 @@ export default function LoginScreen() {
     }
   };
 
-  const logoSize = screenWidth * 0.4; // 20% of screen width
+  const logoSize = Math.min(screenWidth * 0.35, 120);
 
   return (
-    <ScreenContainer scrollable withPadding keyboardShouldPersistTaps="handled" withBrandWatermark>
+    <ScreenContainer
+      scrollable
+      keyboardShouldPersistTaps="handled"
+      withGlassGradient={false} // Disable dark overlay
+      backgroundImage={require('../../../assets/backgrounds/auth-login-mosque.png')}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardContainer}
       >
         <View style={styles.content}>
+          <BlurView intensity={35} tint="dark" style={styles.glassCard}>
 
-          {/* Header Section */}
-          <View style={styles.header}>
-            <Animated.View style={animatedLogoStyle}>
-              <Image
-                source={require('../../../assets/branding/splash_logo.png')}
-                style={{ width: logoSize, height: logoSize }}
-                resizeMode="contain"
-                accessibilityLabel="SalahMate Official Logo"
-              />
-            </Animated.View>
-
-            <Animated.View style={[styles.headerTextContainer, animatedHeaderStyle]}>
-              <Text
-                variant="headlineMedium"
-                style={[styles.title, { color: theme.colors.onSurface }]}
-              >
-                Welcome Back
-              </Text>
-              <Text
-                variant="bodyMedium"
-                style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
-              >
-                Continue your spiritual journey with SalahMate.
-              </Text>
-            </Animated.View>
-          </View>
-
-          {/* Form Card */}
-          <Animated.View style={[styles.formWrapper, animatedFormStyle]}>
-            <Card mode="elevated" elevation={1} style={styles.formCard}>
-              <View style={styles.formSection}>
-                {serverError ? (
-                  <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                    {serverError}
-                  </Text>
-                ) : null}
-
-                <TextInput
-                  label="Email Address"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    if (emailError) setEmailError('');
-                  }}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  left={<TextInput.Icon icon="email-outline" />}
-                  errorMessage={emailError}
+            {/* Header Section */}
+            <View style={styles.header}>
+              <Animated.View style={animatedLogoStyle}>
+                <Image
+                  source={require('../../../assets/branding/splash_logo.png')}
+                  style={{ width: logoSize, height: logoSize }}
+                  resizeMode="contain"
+                  accessibilityLabel="SalahMate Official Logo"
                 />
+              </Animated.View>
 
-                <PasswordInput
-                  label="Password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    if (passwordError) setPasswordError('');
-                  }}
-                  left={<TextInput.Icon icon="lock-outline" />}
-                  errorMessage={passwordError}
-                />
+              <Animated.View style={[styles.headerTextContainer, animatedHeaderStyle]}>
+                <Text style={styles.title}>
+                  Welcome Back
+                </Text>
+              </Animated.View>
+            </View>
 
-                <View style={styles.forgotContainer}>
-                  <Button
-                    mode="text"
-                    compact
-                    onPress={() => router.push('/(auth)/forgot-password')}
-                    textColor={theme.colors.primary}
-                    contentStyle={styles.forgotButtonContent}
-                  >
-                    Forgot Password?
-                  </Button>
-                </View>
+            {/* Form Section */}
+            <Animated.View style={[styles.formWrapper, animatedFormStyle]}>
+              {serverError ? (
+                <Text style={styles.errorText}>
+                  {serverError}
+                </Text>
+              ) : null}
 
-                <View style={styles.submitContainer}>
-                  <PrimaryButton
-                    label="Sign In"
-                    onPress={validateAndSubmit}
-                    loading={isSubmitting}
-                    fullWidth
-                    icon="login"
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <View style={[styles.inputBox, emailError ? styles.inputBoxError : null]}>
+                  <AppIcon name="account-outline" size={20} color="#FFFFFF" style={styles.inputIcon} />
+                  <RNTextInput
+                    style={styles.textInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      if (emailError) setEmailError('');
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
                   />
                 </View>
-
-
+                {!!emailError && <Text style={styles.fieldErrorText}>{emailError}</Text>}
               </View>
-            </Card>
 
-            {/* Footer Navigation */}
-            <View style={styles.footer}>
-              <Text
-                variant="bodySmall"
-                style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={[styles.inputBox, passwordError ? styles.inputBoxError : null]}>
+                  <AppIcon name="lock-outline" size={20} color="#FFFFFF" style={styles.inputIcon} />
+                  <RNTextInput
+                    style={styles.textInput}
+                    placeholder="Enter your password"
+                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      if (passwordError) setPasswordError('');
+                    }}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                  />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                    <AppIcon name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="rgba(255, 255, 255, 0.5)" />
+                  </Pressable>
+                </View>
+                {!!passwordError && <Text style={styles.fieldErrorText}>{passwordError}</Text>}
+              </View>
+
+              {/* Forgot Password */}
+              <View style={styles.forgotContainer}>
+                <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
+                  <Text style={styles.forgotText}>Forgot Password</Text>
+                </Pressable>
+              </View>
+
+              {/* Sign In Button */}
+              <Pressable
+                style={({ pressed }) => [styles.signInButton, pressed && { opacity: 0.8 }]}
+                onPress={validateAndSubmit}
+                disabled={isSubmitting}
               >
-                Don&apos;t have an account yet?
-              </Text>
-              <SecondaryButton
-                label="Create an Account"
-                onPress={() => router.push('/(auth)/signup')}
-                fullWidth
-                icon="account-plus"
-                style={styles.signupButton}
-              />
-            </View>
-          </Animated.View>
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.signInButtonText}>Sign In</Text>
+                )}
+              </Pressable>
+
+              {/* Footer */}
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                  Don't have an account?{' '}
+                </Text>
+                <Pressable onPress={() => router.push('/(auth)/signup')}>
+                  <Text style={styles.signupText}>Sign Up</Text>
+                </Pressable>
+              </View>
+
+            </Animated.View>
+          </BlurView>
         </View>
       </KeyboardAvoidingView>
     </ScreenContainer>
@@ -275,64 +273,130 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  errorText: {
-    textAlign: 'center',
-    marginBottom: spacing.md,
-    fontWeight: 'bold',
-  },
   keyboardContainer: {
     flex: 1,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingVertical: spacing.md,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  glassCard: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    backgroundColor: 'rgba(4, 91, 75, 0.3)', // Soft teal tint
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    overflow: 'hidden',
   },
   header: {
     alignItems: 'center',
-    marginVertical: spacing.xl,
+    marginBottom: 32,
   },
   headerTextContainer: {
     alignItems: 'center',
-    marginTop: spacing.lg,
+    marginTop: 16,
   },
   title: {
-    fontWeight: '800',
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.lg,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   formWrapper: {
     width: '100%',
   },
-  formCard: {
-    marginVertical: spacing.md,
+  errorText: {
+    color: '#FF6B6B',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontWeight: '600',
   },
-  formSection: {
-    padding: spacing.sm,
+  fieldErrorText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(74, 222, 128, 0.4)', // emerald border
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    paddingHorizontal: 16,
+  },
+  inputBoxError: {
+    borderColor: '#FF6B6B',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    height: '100%',
+  },
+  eyeIcon: {
+    padding: 4,
   },
   forgotContainer: {
     alignItems: 'flex-end',
-    marginTop: spacing.xs,
-    marginBottom: spacing.md,
+    marginBottom: 24,
   },
-  forgotButtonContent: {
-    minHeight: 36,
+  forgotText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    opacity: 0.9,
   },
-  submitContainer: {
-    marginTop: spacing.xs,
-  },
-
-  footer: {
+  signInButton: {
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: '#045B4B', // Dark teal/emerald
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.lg,
+    shadowColor: '#045B4B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: 24,
+  },
+  signInButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footerText: {
-    marginBottom: spacing.xs,
+    color: '#FFFFFF',
+    fontSize: 14,
+    opacity: 0.8,
   },
-  signupButton: {
-    marginTop: spacing.xs,
+  signupText: {
+    color: '#4ADE80', // bright emerald
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

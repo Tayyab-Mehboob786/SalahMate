@@ -16,6 +16,7 @@ export interface Ayah {
   pageNumber: number;
   juzNumber: number;
   hizbNumber: number;
+  translation?: string;
 }
 
 export interface Page {

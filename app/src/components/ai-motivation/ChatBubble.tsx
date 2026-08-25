@@ -3,7 +3,6 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { GlassCard } from '@/components/glass';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 
@@ -29,11 +28,11 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
   if (isUser) {
     return (
       <Animated.View entering={FadeInUp.duration(300)} style={[styles.container, styles.userContainer]}>
-        <View style={[styles.userBubble, { backgroundColor: theme.colors.primary }]}>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onPrimary }}>
+        <View style={[styles.userBubble, { backgroundColor: '#8EDCB8' }]}>
+          <Text variant="bodyMedium" style={{ color: '#000000', fontWeight: '500' }}>
             {message.text}
           </Text>
-          <Text variant="labelSmall" style={[styles.timestamp, { color: theme.colors.onPrimary, opacity: 0.7 }]}>
+          <Text variant="labelSmall" style={[styles.timestamp, { color: 'rgba(0,0,0,0.6)' }]}>
             {formatTime(message.timestamp)}
           </Text>
         </View>
@@ -44,18 +43,18 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
   // AI Message
   return (
     <Animated.View entering={FadeInUp.duration(300)} style={[styles.container, styles.aiContainer]}>
-      <View style={[styles.aiAvatar, { backgroundColor: theme.colors.primary }]}>
-        <AppIcon name="robot" size={18} color={theme.colors.onPrimary} />
+      <View style={[styles.aiAvatar, { backgroundColor: '#8EDCB8' }]}>
+        <AppIcon name="robot" size={18} color="#000000" />
       </View>
       <View style={styles.aiBubbleWrapper}>
-        <GlassCard style={[styles.aiBubble, { padding: spacing.md }]}>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
+        <View style={[styles.aiBubble, { padding: spacing.md, backgroundColor: 'rgba(0,0,0,0.35)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }]}>
+          <Text variant="bodyMedium" style={{ color: '#FFFFFF' }}>
             {message.text}
           </Text>
-          <Text variant="labelSmall" style={[styles.timestamp, { color: theme.colors.onSurfaceVariant }]}>
+          <Text variant="labelSmall" style={[styles.timestamp, { color: 'rgba(255,255,255,0.6)' }]}>
             {formatTime(message.timestamp)}
           </Text>
-        </GlassCard>
+        </View>
       </View>
     </Animated.View>
   );

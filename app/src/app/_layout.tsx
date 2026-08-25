@@ -100,10 +100,6 @@ function RootAppContent() {
         <Stack.Screen name="asma-ul-husna" options={{ headerShown: false }} />
         <Stack.Screen name="hijri-calendar" options={{ headerShown: false }} />
         <Stack.Screen name="qibla" options={{ headerShown: false }} />
-        <Stack.Screen name="duas" options={{ headerShown: false }} />
-        <Stack.Screen name="hadith" options={{ headerShown: false }} />
-        <Stack.Screen name="islamic-events" options={{ headerShown: false }} />
-        <Stack.Screen name="islamic-companion" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       {Platform.OS === 'android' ? (

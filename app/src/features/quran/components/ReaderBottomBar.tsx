@@ -27,41 +27,41 @@ export const ReaderBottomBar: React.FC<ReaderBottomBarProps> = ({
   const theme = useTheme<SalahMateTheme>();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+    <View style={styles.container}>
       
-      {/* Prev Button (Left side physically) */}
+      {/* Next Button (Left side physically for RTL flow) */}
       <Pressable 
-        style={[styles.navButton, !canGoPrev && { opacity: 0.3 }]} 
-        onPress={onPrevPress} 
-        disabled={!canGoPrev}
+        style={[styles.navButton, !canGoNext && { opacity: 0.3 }]} 
+        onPress={onNextPress} 
+        disabled={!canGoNext}
       >
-        <AppIcon name="chevron-left" size={28} color={theme.colors.onSurface} />
+        <AppIcon name="chevron-left" size={28} color="#FFFFFF" />
         <View style={styles.navLabels}>
-          <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>Previous</Text>
-          {canGoPrev && <Text variant="labelMedium" style={{ color: theme.colors.onSurface }}>Page {pageNumber - 1}</Text>}
+          <Text variant="labelSmall" style={{ color: 'rgba(255,255,255,0.7)' }}>Next</Text>
+          {canGoNext && <Text variant="labelMedium" style={{ color: '#FFFFFF' }}>Page {pageNumber + 1}</Text>}
         </View>
       </Pressable>
 
       {/* Center Info */}
       <View style={styles.centerInfo}>
-        <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}>
+        <Text variant="titleMedium" style={{ color: '#FFFFFF', fontWeight: 'bold' }}>
           {surahName}
         </Text>
-        <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+        <Text variant="labelMedium" style={{ color: 'rgba(255,255,255,0.7)' }}>
           Page {pageNumber} • Juz {juzNumber}
         </Text>
       </View>
 
-      {/* Next Button (Right side physically) */}
+      {/* Prev Button (Right side physically for RTL flow) */}
       <Pressable 
-        style={[styles.navButton, !canGoNext && { opacity: 0.3 }, { alignItems: 'flex-end' }]} 
-        onPress={onNextPress} 
-        disabled={!canGoNext}
+        style={[styles.navButton, !canGoPrev && { opacity: 0.3 }, { alignItems: 'flex-end' }]} 
+        onPress={onPrevPress} 
+        disabled={!canGoPrev}
       >
-        <AppIcon name="chevron-right" size={28} color={theme.colors.onSurface} />
+        <AppIcon name="chevron-right" size={28} color="#FFFFFF" />
         <View style={[styles.navLabels, { alignItems: 'flex-end' }]}>
-          <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>Next</Text>
-          {canGoNext && <Text variant="labelMedium" style={{ color: theme.colors.onSurface }}>Page {pageNumber + 1}</Text>}
+          <Text variant="labelSmall" style={{ color: 'rgba(255,255,255,0.7)' }}>Previous</Text>
+          {canGoPrev && <Text variant="labelMedium" style={{ color: '#FFFFFF' }}>Page {pageNumber - 1}</Text>}
         </View>
       </Pressable>
 
@@ -76,7 +76,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    backgroundColor: 'rgba(0,0,0,0.35)',
     borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
     paddingBottom: 24, // Safe area padding
   },
   navButton: {

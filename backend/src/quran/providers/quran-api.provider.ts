@@ -20,7 +20,7 @@ export class QuranApiProvider implements QuranProviderInterface {
   
   // Data Caches
   private surahCache: CacheEntry<Surah[]> | null = null;
-  private juzCache: Map<number, CacheEntry<Juz>> = new Map();
+  private juzCache: Map<string, CacheEntry<Juz>> = new Map();
   private translationsCache: CacheEntry<Translation[]> | null = null;
 
   // Config Cache
@@ -189,11 +189,19 @@ export class QuranApiProvider implements QuranProviderInterface {
     }
   }
 
-  async getPage(pageNumber: number): Promise<Page> {
-    const data = await this.makeRequest<any>(`/content/api/v4/verses/by_page/${pageNumber}`, {
+  async getPage(pageNumber: number, translationId?: number, reciterId?: number): Promise<Page> {
+    const params: any = {
       words: false,
       fields: 'text_uthmani',
-    });
+    };
+    if (translationId) {
+      params.translations = translationId;
+    }
+    if (reciterId) {
+      params.audio = reciterId;
+    }
+
+    const data = await this.makeRequest<any>(`/content/api/v4/verses/by_page/${pageNumber}`, params);
 
     const verses = data.verses || [];
     const mappedAyahs: Ayah[] = verses.map((v: any) => ({
@@ -205,6 +213,8 @@ export class QuranApiProvider implements QuranProviderInterface {
       pageNumber: v.page_number,
       juzNumber: v.juz_number,
       hizbNumber: v.hizb_number,
+      translation: v.translations && v.translations.length > 0 ? v.translations[0].text : undefined,
+      audioUrl: v.audio?.url ? `https://verses.quran.com/${v.audio.url}` : undefined,
     }));
 
     return {
@@ -213,17 +223,26 @@ export class QuranApiProvider implements QuranProviderInterface {
     };
   }
 
-  async getJuz(juzNumber: number): Promise<Juz> {
+  async getJuz(juzNumber: number, translationId?: number, reciterId?: number): Promise<Juz> {
     const now = Date.now();
-    const cached = this.juzCache.get(juzNumber);
+    const cacheKey = `${juzNumber}-${translationId || 'none'}-${reciterId || 'none'}`;
+    const cached = this.juzCache.get(cacheKey);
     if (cached && cached.expiry > now) {
       return cached.data;
     }
 
-    const data = await this.makeRequest<any>(`/content/api/v4/verses/by_juz/${juzNumber}`, {
+    const params: any = {
       fields: 'text_uthmani',
       per_page: 500,
-    });
+    };
+    if (translationId) {
+      params.translations = translationId;
+    }
+    if (reciterId) {
+      params.audio = reciterId;
+    }
+
+    const data = await this.makeRequest<any>(`/content/api/v4/verses/by_juz/${juzNumber}`, params);
 
     const verses = data.verses || [];
     const mappedAyahs: Ayah[] = verses.map((v: any) => ({
@@ -235,10 +254,12 @@ export class QuranApiProvider implements QuranProviderInterface {
       pageNumber: v.page_number,
       juzNumber: v.juz_number,
       hizbNumber: v.hizb_number,
+      translation: v.translations && v.translations.length > 0 ? v.translations[0].text : undefined,
+      audioUrl: v.audio?.url ? `https://verses.quran.com/${v.audio.url}` : undefined,
     }));
 
     const result: Juz = { juzNumber, ayahs: mappedAyahs };
-    this.juzCache.set(juzNumber, { data: result, expiry: now + 86400000 });
+    this.juzCache.set(cacheKey, { data: result, expiry: now + 86400000 });
     return result;
   }
 
@@ -284,6 +305,11 @@ export class QuranApiProvider implements QuranProviderInterface {
 
   async getAudio(): Promise<any[]> {
     const data = await this.makeRequest<any>('/content/api/v4/resources/recitations');
-    return data.recitations || [];
+    const recitations = data.recitations || [];
+    return recitations.map((r: any) => ({
+      id: r.id,
+      name: r.reciter_name,
+      style: r.style || null,
+    }));
   }
 }

@@ -58,14 +58,14 @@ export const QuranBrowseScreen = () => {
     const startPage = getSurahStartPage(surah.id);
     router.push({
       pathname: '/quran/reader',
-      params: { surahId: surah.id, surahName: surah.nameTranslated, page: startPage }
+      params: { mode: 'surah', surahId: surah.id, surahName: surah.nameTranslated, page: startPage }
     });
   };
 
   const handleJuzPress = (juz: JuzItem) => {
     router.push({
       pathname: '/quran/reader',
-      params: { juz: juz.juzNumber, page: juz.pageStart }
+      params: { mode: 'juz', juz: juz.juzNumber, page: juz.pageStart }
     });
   };
 
@@ -91,35 +91,41 @@ export const QuranBrowseScreen = () => {
   );
 
   return (
-    <ScreenContainer scrollable={false} edges={['top', 'left', 'right']}>
+    <ScreenContainer 
+      scrollable={false} 
+      edges={['top', 'left', 'right']}
+      backgroundImage={require('../../../../assets/backgrounds/quran-background.png')}
+    >
       {/* Reused custom app bar but with different props */}
-      <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.header}>
         <View style={styles.headerTop}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <AppIcon name="arrow-left" size={24} color={theme.colors.onBackground} />
+            <AppIcon name="arrow-left" size={24} color="#8EDCB8" />
           </Pressable>
           <View>
-            <Text variant="titleLarge" style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
+            <Text variant="titleLarge" style={[styles.headerTitle, { color: '#FFFFFF' }]}>
               Browse Quran
             </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center' }}>
               114 Surahs • 30 Juz
             </Text>
           </View>
+          {/* Empty view for balance if needed, but flex seems to handle it */}
+          <View style={{ width: 24, marginLeft: spacing.md }} />
         </View>
 
-        <View style={[styles.searchBox, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <AppIcon name="magnify" size={20} color={theme.colors.onSurfaceVariant} />
+        <View style={styles.searchBox}>
+          <AppIcon name="magnify" size={20} color="rgba(255,255,255,0.5)" />
           <TextInput 
-            style={[styles.searchInput, { color: theme.colors.onSurface }]}
+            style={styles.searchInput}
             placeholder="Search Surah..."
-            placeholderTextColor={theme.colors.onSurfaceVariant}
+            placeholderTextColor="rgba(255,255,255,0.5)"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery('')}>
-              <AppIcon name="close-circle" size={18} color={theme.colors.onSurfaceVariant} />
+              <AppIcon name="close-circle" size={18} color="rgba(255,255,255,0.5)" />
             </Pressable>
           )}
         </View>
@@ -178,12 +184,11 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: spacing.xl,
     paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
@@ -199,14 +204,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: spacing.md,
     paddingHorizontal: spacing.md,
-    height: 44,
-    borderRadius: 22,
+    height: 48,
+    borderRadius: 24,
     marginBottom: spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   searchInput: {
     flex: 1,
     marginLeft: spacing.sm,
     fontSize: 16,
+    color: '#FFFFFF',
   },
   listContainer: {
     flex: 1,

@@ -19,9 +19,20 @@ import type { SalahMateTheme } from '@/theme';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
+const getStatusColor = (status: string | undefined, defaultColor: string, trackColor: string) => {
+  if (!status) return trackColor;
+  const s = status.toUpperCase();
+  if (s === 'COMPLETED') return '#2ECC71';
+  if (s === 'QADA') return '#F1C40F';
+  if (s === 'MISSED') return '#E74C3C';
+  return trackColor;
+};
+
 export interface ProgressRingProps {
   /** Progress percentage between 0 and 1 (e.g. 0.8 = 80%) */
   progress: number;
+  /** Optional array of prayer statuses for multi-color segments */
+  statuses?: string[];
   /** Size in pixels (diameter of the ring, defaults to 120) */
   size?: number;
   /** Stroke width in pixels (defaults to 12) */
@@ -40,6 +51,7 @@ export interface ProgressRingProps {
 
 export const ProgressRing: React.FC<ProgressRingProps> = ({
   progress,
+  statuses,
   size = 120,
   strokeWidth = 12,
   color,
@@ -72,6 +84,10 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
     };
   });
 
+  const isMultiColor = statuses && statuses.length === 5;
+  const segmentGap = 4;
+  const segmentLength = Math.max(0, (circumference / 5) - segmentGap);
+
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       <Svg width={size} height={size} style={styles.svg}>
@@ -84,19 +100,43 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
           strokeWidth={strokeWidth}
           fill="transparent"
         />
-        {/* Animated Progress Circle */}
-        <AnimatedCircle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={activeColor}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          animatedProps={animatedProps}
-          strokeLinecap="round"
-          fill="transparent"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
+
+        {isMultiColor ? (
+          statuses.map((st, i) => {
+            const segColor = getStatusColor(st, activeColor, 'transparent');
+            if (segColor === 'transparent') return null;
+
+            const offset = -i * (circumference / 5);
+            return (
+              <Circle
+                key={`ring-seg-${i}`}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke={segColor}
+                strokeWidth={strokeWidth}
+                fill="transparent"
+                strokeDasharray={`${segmentLength} ${circumference - segmentLength}`}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+                transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              />
+            );
+          })
+        ) : (
+          <AnimatedCircle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={activeColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            animatedProps={animatedProps}
+            strokeLinecap="round"
+            fill="transparent"
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        )}
       </Svg>
 
       <View style={StyleSheet.absoluteFill}>

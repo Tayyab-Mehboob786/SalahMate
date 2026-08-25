@@ -2,7 +2,6 @@ import { AppIcon } from '../common/AppIcon';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { GlassCard } from '@/components/glass';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 
@@ -15,30 +14,30 @@ export const WelcomeCard: React.FC<WelcomeCardProps> = ({ userName }) => {
   const firstName = userName ? userName.split(' ')[0] : '';
 
   return (
-    <GlassCard style={[styles.card, { padding: spacing.lg }]}>
-      <Text variant="bodyLarge" style={[styles.greeting, { color: theme.colors.onSurface, fontWeight: 'bold', textAlign: 'center' }]}>
+    <View style={[styles.card, { padding: spacing.lg, backgroundColor: 'rgba(0,0,0,0.35)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderRadius: 16 }]}>
+      <Text variant="bodyLarge" style={[styles.greeting, { color: '#FFFFFF', fontWeight: 'bold', textAlign: 'center' }]}>
         {firstName ? `Assalamu Alaikum, ${firstName}` : 'Assalamu Alaikum'}
       </Text>
       
-      <Text variant="bodyMedium" style={[styles.description, { color: theme.colors.onSurfaceVariant }]}>
+      <Text variant="bodyMedium" style={[styles.description, { color: 'rgba(255,255,255,0.8)' }]}>
         I'm your Islamic Prayer & Spiritual Companion. I can help you with:
       </Text>
 
       <View style={styles.list}>
-        {['Prayer motivation', 'Salah consistency', 'Daily duas', 'Islamic reminders', 'Spiritual growth', 'Islamic knowledge'].map((item, index) => (
+        {['Prayer motivation', 'Salah consistency', 'Islamic reminders', 'Spiritual growth', 'Islamic knowledge'].map((item, index) => (
           <View key={index} style={styles.listItem}>
-            <AppIcon name="circle-small" size={16} color={theme.colors.primary} />
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
+            <AppIcon name="circle-small" size={16} color="#8EDCB8" />
+            <Text variant="bodyMedium" style={{ color: '#FFFFFF' }}>
               {item}
             </Text>
           </View>
         ))}
       </View>
 
-      <Text variant="bodyMedium" style={[styles.footer, { color: theme.colors.primary, fontWeight: '600' }]}>
+      <Text variant="bodyMedium" style={[styles.footer, { color: '#8EDCB8', fontWeight: '600' }]}>
         How can I help you today?
       </Text>
-    </GlassCard>
+    </View>
   );
 };
 

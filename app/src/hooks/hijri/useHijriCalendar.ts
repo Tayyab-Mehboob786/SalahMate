@@ -98,6 +98,12 @@ export function useHijriCalendar() {
     }
   };
 
+  const setMonth = (monthNumber: number) => {
+    if (monthNumber >= 1 && monthNumber <= 12) {
+      setCurrentHijriMonth(monthNumber);
+    }
+  };
+
   return {
     monthData,
     loading,
@@ -107,5 +113,6 @@ export function useHijriCalendar() {
     todayHijriStr,
     nextMonth,
     prevMonth,
+    setMonth,
   };
 }

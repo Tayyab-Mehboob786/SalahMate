@@ -64,8 +64,8 @@ export const GlassModal: React.FC<GlassModalProps> = ({
           style={[
             styles.panel,
             {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
+              backgroundColor: 'rgba(15, 23, 42, 0.92)',
+              borderColor: 'rgba(255, 255, 255, 0.18)',
             },
             shadows.xl,
             style,
@@ -73,17 +73,17 @@ export const GlassModal: React.FC<GlassModalProps> = ({
         >
           {title ? (
             <View style={styles.header}>
-              <View style={[styles.handle, { backgroundColor: theme.colors.outline }]} />
+              <View style={[styles.handle, { backgroundColor: 'rgba(255, 255, 255, 0.3)' }]} />
               <Text
                 variant="titleMedium"
-                style={[styles.title, { color: theme.colors.onSurface }]}
+                style={[styles.title, { color: '#FFFFFF', fontSize: 18, fontWeight: '700' }]}
               >
                 {title}
               </Text>
             </View>
           ) : (
             <View style={styles.handleContainer}>
-              <View style={[styles.handle, { backgroundColor: theme.colors.outline }]} />
+              <View style={[styles.handle, { backgroundColor: 'rgba(255, 255, 255, 0.3)' }]} />
             </View>
           )}
 
@@ -99,10 +99,10 @@ export const GlassBottomSheet = GlassModal;
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
   },
   backdropOverlay: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
   },
   centeredContainer: {
     flex: 1,

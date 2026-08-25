@@ -1,10 +1,7 @@
 /**
  * SalahMate — GlassButton Component
  *
- * Three clean button variants:
- * - `primary`: Emerald Green background, white text, soft shadow
- * - `glass` / `secondary`: White background, emerald border
- * - `outlined`: Transparent, emerald border, green text
+ * Premium button using glassmorphism.
  */
 
 import React from 'react';
@@ -12,10 +9,12 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Text, useTheme } from 'react-native-paper';
+import { BlurView } from 'expo-blur';
+import { useGlassTheme } from '@/theme/glass';
 import { shadows, spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 
-export type GlassButtonVariant = 'primary' | 'secondary' | 'glass' | 'outlined';
+export type GlassButtonVariant = 'primary' | 'secondary' | 'glass' | 'outlined' | 'white' | 'white-outlined';
 
 export interface GlassButtonProps {
   label: string;
@@ -41,13 +40,13 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
   accessibilityLabel,
 }) => {
   const theme = useTheme<SalahMateTheme>();
+  const glass = useGlassTheme();
   const scale = useSharedValue<number>(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  /* eslint-disable react-hooks/immutability */
   const handlePressIn = () => {
     if (!disabled && !loading) {
       if (typeof scale.set === 'function') {
@@ -67,43 +66,74 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
       }
     }
   };
-  /* eslint-enable react-hooks/immutability */
 
   const isPrimary = variant === 'primary';
   const isOutlined = variant === 'outlined';
 
   const getBackgroundColor = (): string => {
     if (disabled) {
+      if (variant.startsWith('white')) return 'rgba(255, 255, 255, 0.1)';
       return theme.colors.surfaceVariant;
     }
-    if (isPrimary) {
-      return theme.colors.primary;
-    }
-    if (isOutlined) {
-      return 'transparent';
-    }
-    return theme.colors.surface; // White/surface background for glass/secondary
+    if (variant === 'white') return 'rgba(255, 255, 255, 0.2)';
+    if (variant === 'white-outlined') return 'transparent';
+    if (isPrimary) return theme.colors.primary;
+    if (isOutlined) return 'transparent';
+    return glass.buttonBackground; 
   };
 
   const getBorderColor = (): string => {
     if (disabled) {
+      if (variant.startsWith('white')) return 'rgba(255, 255, 255, 0.2)';
       return theme.colors.border;
     }
-    if (isPrimary) {
-      return 'transparent';
-    }
-    return theme.colors.primary; // Emerald border for secondary/outlined
+    if (variant === 'white') return 'rgba(255, 255, 255, 0.4)';
+    if (variant === 'white-outlined') return 'rgba(255, 255, 255, 0.8)';
+    if (isPrimary) return 'transparent';
+    if (isOutlined) return theme.colors.primary;
+    return glass.border;
   };
 
   const getTextColor = (): string => {
     if (disabled) {
+      if (variant.startsWith('white')) return 'rgba(255, 255, 255, 0.4)';
       return theme.colors.onSurfaceVariant;
     }
-    if (isPrimary) {
-      return theme.colors.onPrimary;
-    }
-    return theme.colors.primary; // Emerald text for secondary/outlined
+    if (variant.startsWith('white')) return '#FFFFFF';
+    if (isPrimary) return theme.colors.onPrimary;
+    return theme.colors.primary;
   };
+
+  const buttonContent = (
+    <>
+      <View
+        style={[
+          styles.overlay,
+          {
+            borderRadius,
+            backgroundColor: getBackgroundColor(),
+            borderColor: getBorderColor(),
+            borderWidth: isPrimary ? 0 : (variant.startsWith('white') ? 1 : 1.5),
+          },
+        ]}
+      />
+      <View style={styles.content}>
+        {loading ? (
+          <ActivityIndicator size="small" color={getTextColor()} style={styles.spinner} />
+        ) : icon ? (
+          <View style={styles.iconContainer}>{icon}</View>
+        ) : null}
+
+        <Text
+          variant="labelLarge"
+          style={[styles.label, { color: getTextColor() }]}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+      </View>
+    </>
+  );
 
   return (
     <Animated.View style={[animatedStyle, style]}>
@@ -118,30 +148,23 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
         accessibilityState={{ disabled: disabled || loading, busy: loading }}
         style={[
           styles.container,
-          {
-            borderRadius,
-            backgroundColor: getBackgroundColor(),
-            borderColor: getBorderColor(),
-            borderWidth: isPrimary ? 0 : 1.5,
-          },
+          { borderRadius },
           isPrimary && !disabled ? shadows.sm : undefined,
         ]}
       >
-        <View style={styles.content}>
-          {loading ? (
-            <ActivityIndicator size="small" color={getTextColor()} style={styles.spinner} />
-          ) : icon ? (
-            <View style={styles.iconContainer}>{icon}</View>
-          ) : null}
-
-          <Text
-            variant="labelLarge"
-            style={[styles.label, { color: getTextColor() }]}
-            numberOfLines={1}
+        {variant === 'glass' || variant.startsWith('white') ? (
+          <BlurView
+            intensity={variant.startsWith('white') ? 25 : glass.blurIntensity}
+            tint={variant.startsWith('white') ? 'light' : (glass.blurTint as any)}
+            style={[styles.blurView, { borderRadius }]}
           >
-            {label}
-          </Text>
-        </View>
+            {buttonContent}
+          </BlurView>
+        ) : (
+          <View style={[styles.blurView, { borderRadius }]}>
+            {buttonContent}
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );
@@ -150,15 +173,21 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     minHeight: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    overflow: 'visible',
+  },
+  blurView: {
+    flex: 1,
     overflow: 'hidden',
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
   content: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
     zIndex: 1,
   },
   label: {

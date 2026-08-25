@@ -13,7 +13,7 @@ import { Text, useTheme } from 'react-native-paper';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, runOnJS } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { BrandWatermark } from '@/components';
+import { ScreenContainer } from '@/components';
 import type { SalahMateTheme } from '@/theme';
 
 export default function AnimatedSplashScreen() {
@@ -25,23 +25,38 @@ export default function AnimatedSplashScreen() {
   const [isAnimationDone, setIsAnimationDone] = useState(false);
 
   const handleAnimationComplete = () => {
-    setIsAnimationDone(true);
+    setTimeout(() => {
+      setIsAnimationDone(true);
+    }, 2000);
   };
 
   useEffect(() => {
-    // 1. Instantly hide native splash screen for a flicker-free handoff
-    // The logo matches the exact center position & size of the native splash.
-    SplashScreen.hideAsync().catch(() => {});
-
-    // 2. Animate the 'SalahMate' app name fading in smoothly
-    textOpacity.value = withDelay(
-      300, 
-      withTiming(1, { duration: 800 }, (finished) => {
-        if (finished) {
-          runOnJS(handleAnimationComplete)();
-        }
-      })
-    );
+    async function prepareSplashAndAssets() {
+      try {
+        const bg1 = Image.resolveAssetSource(require('../../assets/backgrounds/auth-login-mosque.png')).uri;
+        const bg2 = Image.resolveAssetSource(require('../../assets/backgrounds/auth-signup-mosque.png')).uri;
+        const bg3 = Image.resolveAssetSource(require('../../assets/backgrounds/home-mosque.png')).uri;
+        
+        await Promise.all([
+          Image.prefetch(bg1),
+          Image.prefetch(bg2),
+          Image.prefetch(bg3),
+        ]);
+      } catch (e) {
+        console.warn('Asset prefetch error:', e);
+      } finally {
+        SplashScreen.hideAsync().catch(() => {});
+        textOpacity.value = withDelay(
+          300, 
+          withTiming(1, { duration: 800 }, (finished) => {
+            if (finished) {
+              runOnJS(handleAnimationComplete)();
+            }
+          })
+        );
+      }
+    }
+    prepareSplashAndAssets();
   }, [textOpacity]);
 
   // 3. Navigation sequence logic
@@ -64,26 +79,26 @@ export default function AnimatedSplashScreen() {
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <BrandWatermark />
-      
-      <View style={styles.logoContainer}>
-        <Image 
-          source={require('../../assets/branding/splash_logo.png')} 
-          style={styles.logo}
-          resizeMode="contain"
-          accessibilityLabel="SalahMate Official Logo"
-        />
-        <Animated.View style={[styles.textContainer, animatedTextStyle]}>
-          <Text variant="displaySmall" style={[styles.title, { color: theme.colors.primary }]}>
-            SalahMate
-          </Text>
-          <Text variant="labelMedium" style={[styles.tagline, { color: theme.colors.onSurfaceVariant }]}>
-            TRACK • REFLECT • GROW
-          </Text>
-        </Animated.View>
+    <ScreenContainer backgroundImage={require('../../assets/backgrounds/auth-login-mosque.png')} withGlassGradient={false}>
+      <View style={styles.container}>
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../../assets/branding/splash_logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="SalahMate Official Logo"
+          />
+          <Animated.View style={[styles.textContainer, animatedTextStyle]}>
+            <Text variant="displaySmall" style={[styles.title, { color: '#FFFFFF' }]}>
+              SalahMate
+            </Text>
+            <Text variant="labelMedium" style={[styles.tagline, { color: 'rgba(255, 255, 255, 0.8)' }]}>
+              TRACK • REFLECT • GROW
+            </Text>
+          </Animated.View>
+        </View>
       </View>
-    </View>
+    </ScreenContainer>
   );
 }
 

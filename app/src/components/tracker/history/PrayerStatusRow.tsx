@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { AppIcon } from '@/components/common/AppIcon';
-import type { SalahMateTheme } from '@/theme';
 import type { PrayerHistoryItem } from '@/api/prayers.api';
 
 interface PrayerStatusRowProps {
@@ -10,8 +8,6 @@ interface PrayerStatusRowProps {
 }
 
 export function PrayerStatusRow({ statuses }: PrayerStatusRowProps) {
-  const theme = useTheme<SalahMateTheme>();
-
   const prayers = [
     { key: 'FAJR', icon: 'weather-sunset-up' },
     { key: 'DHUHR', icon: 'weather-sunny' },
@@ -20,16 +16,16 @@ export function PrayerStatusRow({ statuses }: PrayerStatusRowProps) {
     { key: 'ISHA', icon: 'weather-night' },
   ] as const;
 
-  const getStatusColor = (status: string | null) => {
+  const getStatusIconInfo = (status: string | null) => {
     switch (status) {
       case 'COMPLETED':
-        return theme.colors.primary;
+        return { color: '#2ECC71', icon: 'check-circle', label: 'Prayed' };
       case 'MISSED':
-        return theme.colors.error;
+        return { color: '#E74C3C', icon: 'close-circle', label: 'Missed' };
       case 'QADA':
-        return theme.colors.tertiary;
+        return { color: '#F1C40F', icon: 'clock-outline', label: 'Qaza' };
       default:
-        return theme.colors.outlineVariant;
+        return { color: 'rgba(255,255,255,0.3)', icon: 'circle-outline', label: '--' };
     }
   };
 
@@ -37,10 +33,11 @@ export function PrayerStatusRow({ statuses }: PrayerStatusRowProps) {
     <View style={styles.container}>
       {prayers.map((prayer) => {
         const status = statuses[prayer.key];
-        const color = getStatusColor(status);
+        const { color, icon } = getStatusIconInfo(status);
         return (
           <View key={prayer.key} style={styles.iconContainer}>
-            <AppIcon name={prayer.icon as any} size={20} color={color} />
+            <AppIcon name={prayer.icon as any} size={18} color="rgba(255,255,255,0.8)" style={{ marginBottom: 4 }} />
+            <AppIcon name={icon as any} size={16} color={color} />
           </View>
         );
       })}

@@ -45,13 +45,13 @@ const Chip: React.FC<{ suggestion: Suggestion; onSelect: (text: string) => void;
             styles.chip, 
             animatedStyle, 
             { 
-              backgroundColor: theme.colors.surfaceVariant,
-              borderColor: theme.colors.outlineVariant,
+              backgroundColor: 'rgba(0,0,0,0.35)',
+              borderColor: 'rgba(255,255,255,0.15)',
             }
           ]}
         >
-          <AppIcon name={suggestion.icon as any} size={16} color={theme.colors.primary} style={styles.icon} />
-          <Text variant="labelLarge" style={{ color: theme.colors.onSurfaceVariant }}>
+          <AppIcon name={suggestion.icon as any} size={16} color="#8EDCB8" style={styles.icon} />
+          <Text variant="labelLarge" style={{ color: 'rgba(255,255,255,0.85)' }}>
             {suggestion.text}
           </Text>
         </Animated.View>
@@ -65,7 +65,7 @@ export const SuggestionChips: React.FC<SuggestionChipsProps> = ({ suggestions, o
 
   return (
     <View style={styles.container}>
-      <Text variant="titleSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
+      <Text variant="titleSmall" style={[styles.title, { color: '#FFFFFF' }]}>
         Suggested Questions
       </Text>
       <View style={styles.chipsWrapper}>

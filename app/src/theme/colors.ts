@@ -1,20 +1,15 @@
 /**
- * SalahMate Color System — Premium Redesign
+ * SalahMate Color System — Unified Premium Glassmorphism Redesign
  *
  * Brand Personality: Premium, Calm, Trustworthy, Modern, Elegant, Spiritually Inspiring
  *
  * Core Palette:
- * - Primary Brand: #19698C
- * - Primary Hover/Pressed: #145874
- * - Primary Light: #2A85A5
- * - Success: #22A06B
- * - Achievement/Rewards: #C8A24C
- * - Background: #F8F6F1
- * - Card Background: #FFFFFF
- * - Primary Text: #1B1F23
- * - Secondary Text: #667085
- * - Border: #E5E7EB
- * - Divider: #ECECEC
+ * - Deep teal (Primary Brand): #19698C
+ * - Emerald (Success/Accent): #22A06B
+ * - Turquoise (Primary Light): #2A85A5
+ * - Warm ivory (Background): #F8F6F1
+ * - Charcoal (Text/Icons): #1B1F23
+ * - Small muted-gold accents: #C8A24C
  */
 
 import type { MD3Colors } from 'react-native-paper/lib/typescript/types';
@@ -22,31 +17,23 @@ import type { MD3Colors } from 'react-native-paper/lib/typescript/types';
 // ─── Raw Color Palette ───────────────────────────────────────────────────────
 
 export const palette = {
-  primaryBrand: '#19698C',
+  primaryBrand: '#19698C', // Deep teal
   primaryHover: '#145874',
-  primaryLight: '#2A85A5',
+  primaryLight: '#2A85A5', // Turquoise
   
-  success: '#22A06B',
-  gold: '#C8A24C',
+  success: '#22A06B', // Emerald
+  gold: '#C8A24C', // Muted-gold
   warning: '#F59E0B',
   error: '#EF4444',
   info: '#3B82F6', 
 
-  // Light Mode Neutrals
-  bgLight: '#F8F6F1',
-  cardLight: '#FFFFFF',
-  textPrimaryLight: '#1B1F23',
-  textSecondaryLight: '#667085',
+  // Unified Neutrals
+  bgIvory: '#F8F6F1', // Warm ivory
+  cardWhite: '#FFFFFF',
+  textCharcoal: '#1B1F23', // Charcoal
+  textSecondary: '#667085',
   borderLight: '#E5E7EB',
   dividerLight: '#ECECEC',
-
-  // Dark Mode Neutrals
-  bgDark: '#0F172A',
-  cardDark: '#1E293B',
-  textPrimaryDark: '#F8FAFC', 
-  textSecondaryDark: '#CBD5E1', 
-  borderDark: '#334155', 
-  dividerDark: '#334155',
 
   // Prayer Identity Colors
   fajr: '#3B82F6', 
@@ -64,37 +51,37 @@ export const palette = {
   chart6: '#F59E0B',
 } as const;
 
-// ─── Semantic App Tokens (Light Mode) ────────────────────────────────────────
+// ─── Semantic App Tokens (Unified Theme) ─────────────────────────────────────
 
-export const lightColors = {
-  // MD3 Core Overrides (mapped to new semantic base)
+export const salahMateColors = {
+  // MD3 Core Overrides
   primary: palette.primaryBrand,
-  onPrimary: palette.cardLight,
+  onPrimary: palette.cardWhite,
   primaryContainer: palette.primaryLight,
   onPrimaryContainer: palette.primaryHover,
 
   secondary: palette.primaryLight,
   onSecondary: palette.primaryHover,
-  secondaryContainer: palette.bgLight,
-  onSecondaryContainer: palette.textSecondaryLight,
+  secondaryContainer: palette.bgIvory,
+  onSecondaryContainer: palette.textSecondary,
 
   tertiary: palette.gold,
-  onTertiary: palette.cardLight,
+  onTertiary: palette.cardWhite,
   tertiaryContainer: '#FEF3C7',
   onTertiaryContainer: '#92400E',
 
-  background: palette.bgLight,
-  onBackground: palette.textPrimaryLight,
-  surface: palette.cardLight,
-  onSurface: palette.textPrimaryLight,
+  background: palette.bgIvory,
+  onBackground: palette.textCharcoal,
+  surface: palette.cardWhite,
+  onSurface: palette.textCharcoal,
   surfaceVariant: '#F1F5F9', // Surface Secondary fallback
-  onSurfaceVariant: palette.textSecondaryLight,
+  onSurfaceVariant: palette.textSecondary,
 
-  outline: palette.textSecondaryLight,
+  outline: palette.textSecondary,
   outlineVariant: palette.borderLight,
 
   error: palette.error,
-  onError: palette.cardLight,
+  onError: palette.cardWhite,
   errorContainer: '#FEE2E2',
   onErrorContainer: '#991B1B',
 
@@ -103,14 +90,14 @@ export const lightColors = {
   surfaceSecondary: '#F5F5F5',
   border: palette.borderLight,
   divider: palette.dividerLight,
-  textPrimary: palette.textPrimaryLight,
-  textSecondary: palette.textSecondaryLight,
-  textOnPrimary: palette.cardLight,
-  textOnSurface: palette.textPrimaryLight,
+  textPrimary: palette.textCharcoal,
+  textSecondary: palette.textSecondary,
+  textOnPrimary: palette.cardWhite,
+  textOnSurface: palette.textCharcoal,
   iconPrimary: palette.primaryBrand,
-  iconSecondary: palette.textSecondaryLight,
-  iconOnPrimary: palette.cardLight,
-  iconOnSurface: palette.textPrimaryLight,
+  iconSecondary: palette.textSecondary,
+  iconOnPrimary: palette.cardWhite,
+  iconOnSurface: palette.textCharcoal,
   iconSuccess: palette.success,
   iconWarning: palette.warning,
   iconError: palette.error,
@@ -124,20 +111,20 @@ export const lightColors = {
   shadow: 'rgba(0, 0, 0, 0.1)',
 
   // Legacy mappings for backwards compatibility
-  white: palette.cardLight,
-  black: palette.textPrimaryLight,
+  white: palette.cardWhite,
+  black: palette.textCharcoal,
   accent: palette.gold,
-  card: palette.cardLight,
+  card: palette.cardWhite,
   scrim: 'rgba(27, 31, 35, 0.32)',
   disabled: '#E5E7EB',
   onDisabled: '#9CA3AF',
   info: palette.info,
-  onInfo: palette.cardLight,
+  onInfo: palette.cardWhite,
   infoContainer: '#DBEAFE',
-  onSuccess: palette.cardLight,
+  onSuccess: palette.cardWhite,
   successContainer: '#DCFCE7',
   onSuccessContainer: '#166534',
-  onWarning: palette.cardLight,
+  onWarning: palette.cardWhite,
   warningContainer: '#FEF3C7',
   onWarningContainer: '#92400E',
 
@@ -156,7 +143,7 @@ export const lightColors = {
 
   elevation: {
     level0: 'transparent',
-    level1: palette.cardLight,
+    level1: palette.cardWhite,
     level2: '#F8FAFC',
     level3: '#F1F5F9',
     level4: '#E2E8F0',
@@ -164,165 +151,35 @@ export const lightColors = {
   },
 } as const;
 
-// ─── Semantic App Tokens (Dark Mode) ─────────────────────────────────────────
-
-export const darkColors = {
-  // MD3 Core Overrides (mapped to new semantic base)
-  primary: palette.primaryBrand,
-  onPrimary: palette.textPrimaryDark,
-  primaryContainer: palette.primaryHover,
-  onPrimaryContainer: palette.primaryLight,
-
-  secondary: palette.primaryLight,
-  onSecondary: palette.textPrimaryDark,
-  secondaryContainer: '#334155',
-  onSecondaryContainer: palette.textSecondaryDark,
-
-  tertiary: palette.gold,
-  onTertiary: '#000000',
-  tertiaryContainer: '#78350F',
-  onTertiaryContainer: '#FEF3C7',
-
-  background: palette.bgDark,
-  onBackground: palette.textPrimaryDark,
-  surface: palette.cardDark,
-  onSurface: palette.textPrimaryDark,
-  surfaceVariant: '#334155',
-  onSurfaceVariant: palette.textSecondaryDark,
-
-  outline: palette.textSecondaryDark,
-  outlineVariant: palette.borderDark,
-
-  error: palette.error,
-  onError: '#000000',
-  errorContainer: '#7F1D1D',
-  onErrorContainer: '#FEE2E2',
-
-  // Semantic Design System Tokens
-  primaryPressed: palette.primaryHover,
-  surfaceSecondary: '#334155',
-  border: palette.borderDark,
-  divider: palette.dividerDark,
-  textPrimary: palette.textPrimaryDark,
-  textSecondary: palette.textSecondaryDark,
-  textOnPrimary: palette.textPrimaryDark,
-  textOnSurface: palette.textPrimaryDark,
-  iconPrimary: palette.primaryBrand,
-  iconSecondary: palette.textSecondaryDark,
-  iconOnPrimary: palette.textPrimaryDark,
-  iconOnSurface: palette.textPrimaryDark,
-  iconSuccess: palette.success,
-  iconWarning: '#FBBF24',
-  iconError: '#FCA5A5',
-  iconAchievement: '#FCD34D',
-  iconDisabled: '#64748B',
-  iconActive: palette.primaryLight,
-  iconInactive: '#64748B',
-  success: palette.success,
-  warning: palette.warning,
-  achievement: palette.gold,
-  shadow: 'rgba(0, 0, 0, 0.4)',
-
-  // Legacy mappings for backwards compatibility
-  white: palette.textPrimaryDark,
-  black: palette.textPrimaryDark,
-  accent: palette.gold,
-  card: palette.cardDark,
-  scrim: 'rgba(0, 0, 0, 0.5)',
-  disabled: '#475569',
-  onDisabled: '#94A3B8',
-  info: palette.info,
-  onInfo: '#000000',
-  infoContainer: '#1E3A8A',
-  onSuccess: '#000000',
-  successContainer: '#14532D',
-  onSuccessContainer: '#DCFCE7',
-  onWarning: '#000000',
-  warningContainer: '#78350F',
-  onWarningContainer: '#FEF3C7',
-
-  fajr: '#93C5FD',
-  dhuhr: '#FCD34D',
-  asr: '#FDBA74',
-  maghrib: '#FCA5A5',
-  isha: '#A5B4FC',
-
-  chart1: palette.chart1,
-  chart2: palette.chart2,
-  chart3: palette.chart3,
-  chart4: palette.chart4,
-  chart5: palette.chart5,
-  chart6: palette.chart6,
-
-  elevation: {
-    level0: 'transparent',
-    level1: '#1E293B',
-    level2: '#334155',
-    level3: '#475569',
-    level4: '#64748B',
-    level5: '#94A3B8',
-  },
-} as const;
-
-export type ThemeColors = typeof lightColors;
+export type ThemeColors = typeof salahMateColors;
 
 // ─── React Native Paper MD3 Color Mapping ────────────────────────────────────
 
-export const md3LightColors: Partial<MD3Colors> & Record<string, unknown> = {
-  primary: lightColors.primary,
-  onPrimary: lightColors.onPrimary,
-  primaryContainer: lightColors.primaryContainer,
-  onPrimaryContainer: lightColors.onPrimaryContainer,
-  secondary: lightColors.secondary,
-  onSecondary: lightColors.onSecondary,
-  secondaryContainer: lightColors.secondaryContainer,
-  onSecondaryContainer: lightColors.onSecondaryContainer,
-  tertiary: lightColors.tertiary,
-  onTertiary: lightColors.onTertiary,
-  tertiaryContainer: lightColors.tertiaryContainer,
-  onTertiaryContainer: lightColors.onTertiaryContainer,
-  error: lightColors.error,
-  onError: lightColors.onError,
-  errorContainer: lightColors.errorContainer,
-  onErrorContainer: lightColors.onErrorContainer,
-  background: lightColors.background,
-  onBackground: lightColors.onBackground,
-  surface: lightColors.surface,
-  onSurface: lightColors.onSurface,
-  surfaceVariant: lightColors.surfaceVariant,
-  onSurfaceVariant: lightColors.onSurfaceVariant,
-  outline: lightColors.outline,
-  outlineVariant: lightColors.outlineVariant,
-  scrim: lightColors.scrim,
-  elevation: lightColors.elevation,
-  // Add all base fields mapped for MD3
-};
-
-export const md3DarkColors: Partial<MD3Colors> & Record<string, unknown> = {
-  primary: darkColors.primary,
-  onPrimary: darkColors.onPrimary,
-  primaryContainer: darkColors.primaryContainer,
-  onPrimaryContainer: darkColors.onPrimaryContainer,
-  secondary: darkColors.secondary,
-  onSecondary: darkColors.onSecondary,
-  secondaryContainer: darkColors.secondaryContainer,
-  onSecondaryContainer: darkColors.onSecondaryContainer,
-  tertiary: darkColors.tertiary,
-  onTertiary: darkColors.onTertiary,
-  tertiaryContainer: darkColors.tertiaryContainer,
-  onTertiaryContainer: darkColors.onTertiaryContainer,
-  error: darkColors.error,
-  onError: darkColors.onError,
-  errorContainer: darkColors.errorContainer,
-  onErrorContainer: darkColors.onErrorContainer,
-  background: darkColors.background,
-  onBackground: darkColors.onBackground,
-  surface: darkColors.surface,
-  onSurface: darkColors.onSurface,
-  surfaceVariant: darkColors.surfaceVariant,
-  onSurfaceVariant: darkColors.onSurfaceVariant,
-  outline: darkColors.outline,
-  outlineVariant: darkColors.outlineVariant,
-  scrim: darkColors.scrim,
-  elevation: darkColors.elevation,
+export const md3Colors: Partial<MD3Colors> & Record<string, unknown> = {
+  primary: salahMateColors.primary,
+  onPrimary: salahMateColors.onPrimary,
+  primaryContainer: salahMateColors.primaryContainer,
+  onPrimaryContainer: salahMateColors.onPrimaryContainer,
+  secondary: salahMateColors.secondary,
+  onSecondary: salahMateColors.onSecondary,
+  secondaryContainer: salahMateColors.secondaryContainer,
+  onSecondaryContainer: salahMateColors.onSecondaryContainer,
+  tertiary: salahMateColors.tertiary,
+  onTertiary: salahMateColors.onTertiary,
+  tertiaryContainer: salahMateColors.tertiaryContainer,
+  onTertiaryContainer: salahMateColors.onTertiaryContainer,
+  error: salahMateColors.error,
+  onError: salahMateColors.onError,
+  errorContainer: salahMateColors.errorContainer,
+  onErrorContainer: salahMateColors.onErrorContainer,
+  background: salahMateColors.background,
+  onBackground: salahMateColors.onBackground,
+  surface: salahMateColors.surface,
+  onSurface: salahMateColors.onSurface,
+  surfaceVariant: salahMateColors.surfaceVariant,
+  onSurfaceVariant: salahMateColors.onSurfaceVariant,
+  outline: salahMateColors.outline,
+  outlineVariant: salahMateColors.outlineVariant,
+  scrim: salahMateColors.scrim,
+  elevation: salahMateColors.elevation,
 };

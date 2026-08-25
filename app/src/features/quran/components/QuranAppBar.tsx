@@ -22,25 +22,27 @@ export const QuranAppBar = () => {
           ]}
           onPress={() => router.back()}
         >
-          <AppIcon name="arrow-left" size={24} color={theme.colors.onBackground} />
+          <AppIcon name="arrow-left" size={24} color="#8EDCB8" />
         </Pressable>
         
         <View style={styles.titleContainer}>
-          <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.primary }]}>
-            📖 Al-Quran
+          <Text variant="headlineMedium" style={styles.title}>
+            Al-Quran
           </Text>
         </View>
 
         {/* Empty view for flex balance */}
-        <View style={styles.backButton} />
+        <View style={{ width: 40, height: 40 }} />
       </View>
 
-      <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-        "The Book in which there is no doubt."
-      </Text>
-      <Text variant="labelSmall" style={[styles.reference, { color: theme.colors.onSurfaceVariant }]}>
-        (Baqarah 2:2)
-      </Text>
+      <View style={styles.quoteContainer}>
+        <Text variant="titleMedium" style={styles.quote}>
+          "The Book in which there is no doubt."
+        </Text>
+        <Text variant="labelMedium" style={styles.reference}>
+          (Baqarah 2:2)
+        </Text>
+      </View>
     </View>
   );
 };
@@ -61,6 +63,8 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -71,14 +75,21 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: '800',
     letterSpacing: 0.5,
+    color: '#F5D061',
   },
-  subtitle: {
-    marginTop: spacing.sm,
-    fontStyle: 'italic',
+  quoteContainer: {
+    marginTop: 48, // Push quote down
+    alignItems: 'center',
+  },
+  quote: {
+    fontWeight: '700',
     textAlign: 'center',
+    color: '#F5D061',
+    fontFamily: 'serif',
   },
   reference: {
-    marginTop: 2,
-    opacity: 0.7,
+    marginTop: spacing.xs,
+    color: '#F5D061',
+    opacity: 0.9,
   }
 });

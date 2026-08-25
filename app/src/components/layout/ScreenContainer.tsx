@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, ImageSourcePropType } from 'react-native';
 import type { RefreshControlProps, ScrollViewProps, StyleProp, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from 'react-native-paper';
@@ -16,6 +16,7 @@ import type { Edge } from 'react-native-safe-area-context';
 import { spacing, useGlassTheme } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 import { BrandWatermark } from '../common/BrandWatermark';
+import { GlassBackground } from '../glass/GlassBackground';
 
 export interface ScreenContainerProps extends Omit<ScrollViewProps, 'style' | 'contentContainerStyle' | 'refreshControl'> {
   /** Screen body content */
@@ -36,6 +37,8 @@ export interface ScreenContainerProps extends Omit<ScrollViewProps, 'style' | 'c
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Optional pull-to-refresh control element when `scrollable={true}` */
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  /** Background image to use for the screen */
+  backgroundImage?: ImageSourcePropType;
 }
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({
@@ -48,6 +51,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   style,
   contentContainerStyle,
   refreshControl,
+  backgroundImage,
   ...scrollViewProps
 }) => {
   const theme = useTheme<SalahMateTheme>();
@@ -55,15 +59,15 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
 
   const baseStyle: StyleProp<ViewStyle> = [
     styles.container,
-    { backgroundColor: theme.colors.background },
+    { backgroundColor: backgroundImage ? 'transparent' : theme.colors.background },
     style,
   ];
 
   const innerPaddingStyle: StyleProp<ViewStyle> = withPadding ? styles.paddedContent : undefined;
 
-  return (
+  const content = (
     <SafeAreaView style={baseStyle} edges={edges}>
-      {withGlassGradient ? (
+      {withGlassGradient && !backgroundImage ? (
         <LinearGradient
           colors={glass.backgroundGradient}
           start={{ x: 0, y: 0 }}
@@ -92,6 +96,16 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
       )}
     </SafeAreaView>
   );
+
+  if (backgroundImage) {
+    return (
+      <GlassBackground source={backgroundImage}>
+        {content}
+      </GlassBackground>
+    );
+  }
+
+  return content;
 };
 
 const styles = StyleSheet.create({

@@ -58,6 +58,7 @@ model User {
   // Relations
   emailVerifications EmailVerification[]
   prayerLogs         PrayerLog[]
+  goals              Goal[]
 }
 
 model EmailVerification {
@@ -100,4 +101,38 @@ model PrayerLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, prayer, date])
+}
+
+enum GoalCategory {
+  QURAN
+  PRAYER
+  ADHKAR
+  LEARNING
+  CUSTOM
+}
+
+model Goal {
+  id              String       @id @default(uuid())
+  userId          String
+  title           String
+  category        GoalCategory
+  startDate       DateTime
+  targetDate      DateTime
+  totalUnits      Int
+  unitLabel       String
+  isCompleted     Boolean      @default(false)
+  
+  // Used strictly for dynamically mapping PRAYER goals to PrayerLogs
+  prayerTarget    Prayer?
+
+  // Progress for non-prayer goals that require manual tracking
+  completedUnits  Int          @default(0)
+
+  // JSON field for reminder configurations (e.g. { type: 'daily', time: '09:00' })
+  reminderConfig  Json?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

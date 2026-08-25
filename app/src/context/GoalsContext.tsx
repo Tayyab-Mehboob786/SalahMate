@@ -1,137 +1,165 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { goalsApi, Goal, GoalCategory, PrayerTarget, GoalReminderConfig, GoalLifecycleStatus } from '../api/goals.api';
+import { useAuth } from '@/hooks/auth/useAuth';
 
-export type GoalCategory = 'Quran' | 'Prayer' | 'Adhkar' | 'Learning' | 'Custom';
+export type { Goal, GoalCategory, PrayerTarget, GoalReminderConfig, GoalLifecycleStatus };
 
-export interface GoalReminder {
-  type: 'daily' | 'weekly' | 'custom';
-  time: string; // HH:mm format
-}
-
-export interface Goal {
-  id: string;
+export interface AddGoalInput {
   title: string;
-  category: GoalCategory;
-  startDate: string; // ISO date string
-  targetDate: string; // ISO date string
-  totalUnits: number; // e.g., 604 pages, 30 days
-  completedUnits: number;
-  unitLabel: string; // 'pages', 'days', 'surahs'
-  reminderConfig: GoalReminder | null;
-  isCompleted: boolean;
+  category: string; // 'Quran' | 'Prayer' | 'Adhkar' | 'Learning' | 'Custom' or 'QURAN' etc.
+  prayerTarget?: PrayerTarget | null;
+  startDate: string;
+  targetDate: string;
+  totalUnits: number;
+  unitLabel: string;
+  reminderConfig?: GoalReminderConfig | null;
 }
 
 export interface GoalsContextType {
   goals: Goal[];
-  addGoal: (goal: Omit<Goal, 'id' | 'completedUnits' | 'isCompleted'>) => void;
-  updateGoalProgress: (id: string, newCompletedUnits: number) => void;
-  deleteGoal: (id: string) => void;
+  activeGoal: Goal | null;
+  isLoading: boolean;
+  error: string | null;
+  addGoal: (goal: AddGoalInput) => Promise<Goal | null>;
+  updateGoalProgress: (id: string, increment: number) => Promise<Goal | null>;
+  deleteGoal: (id: string) => Promise<void>;
   getTodaysTarget: (goal: Goal) => number;
-}
-
-const GOALS_STORAGE_KEY = 'salahmate_goals_data';
-
-// Simple storage wrapper (similar to ThemeContext)
-let storage: {
-  getString: (key: string) => string | undefined;
-  set: (key: string, value: string) => void;
-};
-
-try {
-  const mmkvModule = require('react-native-mmkv');
-  const mmkvInstance = mmkvModule.createMMKV({ id: 'salahmate-goals-storage' });
-  storage = {
-    getString: (key: string) => mmkvInstance.getString(key),
-    set: (key: string, value: string) => mmkvInstance.set(key, value),
-  };
-} catch {
-  storage = {
-    getString: (key: string) => {
-      try {
-        const val = SecureStore.getItem(key);
-        return val !== null ? val : undefined;
-      } catch {
-        return undefined;
-      }
-    },
-    set: (key: string, value: string) => {
-      try {
-        SecureStore.setItemAsync(key, value).catch(() => {});
-      } catch {}
-    },
-  };
+  refreshGoals: () => Promise<void>;
 }
 
 export const GoalsContext = createContext<GoalsContextType>({
   goals: [],
-  addGoal: () => {},
-  updateGoalProgress: () => {},
-  deleteGoal: () => {},
+  activeGoal: null,
+  isLoading: true,
+  error: null,
+  addGoal: async () => null,
+  updateGoalProgress: async () => null,
+  deleteGoal: async () => {},
   getTodaysTarget: () => 0,
+  refreshGoals: async () => {},
 });
 
 export const GoalsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [goals, setGoalsState] = useState<Goal[]>(() => {
-    const savedGoals = storage.getString(GOALS_STORAGE_KEY);
-    return savedGoals ? JSON.parse(savedGoals) : [];
-  });
+  const { isAuthenticated } = useAuth();
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [activeGoal, setActiveGoal] = useState<Goal | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const saveGoals = useCallback((newGoals: Goal[]) => {
-    setGoalsState(newGoals);
-    storage.set(GOALS_STORAGE_KEY, JSON.stringify(newGoals));
-  }, []);
+  const fetchGoals = useCallback(async () => {
+    if (!isAuthenticated) {
+      setGoals([]);
+      setActiveGoal(null);
+      setIsLoading(false);
+      return;
+    }
 
-  const addGoal = useCallback((newGoalData: Omit<Goal, 'id' | 'completedUnits' | 'isCompleted'>) => {
-    const newGoal: Goal = {
-      ...newGoalData,
-      id: Math.random().toString(36).substring(2, 11),
-      completedUnits: 0,
-      isCompleted: false,
-    };
-    saveGoals([...goals, newGoal]);
-  }, [goals, saveGoals]);
-
-  const updateGoalProgress = useCallback((id: string, newCompletedUnits: number) => {
-    const updatedGoals = goals.map(g => {
-      if (g.id === id) {
-        const isCompleted = newCompletedUnits >= g.totalUnits;
-        return { ...g, completedUnits: newCompletedUnits, isCompleted };
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [fetchedGoals, active] = await Promise.all([
+        goalsApi.getGoals(),
+        goalsApi.getActiveGoal(),
+      ]);
+      setGoals(fetchedGoals);
+      setActiveGoal(active);
+    } catch (e: any) {
+      if (e?.response?.status === 401 || e?.status === 401) {
+        setGoals([]);
+        setActiveGoal(null);
+      } else {
+        console.error('Failed to fetch goals:', e?.message || e);
+        setError(e?.message || 'Failed to load goals');
       }
-      return g;
-    });
-    saveGoals(updatedGoals);
-  }, [goals, saveGoals]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
-  const deleteGoal = useCallback((id: string) => {
-    const updatedGoals = goals.filter(g => g.id !== id);
-    saveGoals(updatedGoals);
-  }, [goals, saveGoals]);
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals]);
+
+  const addGoal = useCallback(async (input: AddGoalInput): Promise<Goal | null> => {
+    try {
+      const backendCategory = input.category.toUpperCase() as GoalCategory;
+      const created = await goalsApi.createGoal({
+        title: input.title,
+        category: backendCategory,
+        prayerTarget: input.prayerTarget || null,
+        startDate: input.startDate,
+        targetDate: input.targetDate,
+        totalUnits: input.totalUnits,
+        unitLabel: input.unitLabel,
+        reminderConfig: input.reminderConfig || null,
+      });
+
+      // Instantly sync React state
+      setGoals(prev => [created, ...prev]);
+      if (!activeGoal && !created.isCompleted) {
+        setActiveGoal(created);
+      }
+      return created;
+    } catch (e: any) {
+      console.error('Failed to create goal:', e?.message || e);
+      return null;
+    }
+  }, [activeGoal]);
+
+  const deleteGoal = useCallback(async (id: string) => {
+    try {
+      await goalsApi.deleteGoal(id);
+      setGoals(prev => prev.filter(g => g.id !== id));
+      if (activeGoal?.id === id) {
+        setActiveGoal(null);
+      }
+    } catch (e: any) {
+      console.error('Failed to delete goal:', e?.message || e);
+    }
+  }, [activeGoal]);
+
+  const updateGoalProgress = useCallback(async (id: string, increment: number): Promise<Goal | null> => {
+    try {
+      const updated = await goalsApi.logProgress(id, increment);
+      setGoals(prev => prev.map(g => g.id === id ? updated : g));
+      if (activeGoal?.id === id) {
+        if (updated.progress?.isCompleted || updated.isCompleted) {
+          // Refetch active goal or set to next uncompleted active goal
+          const newActive = await goalsApi.getActiveGoal();
+          setActiveGoal(newActive);
+        } else {
+          setActiveGoal(updated);
+        }
+      }
+      return updated;
+    } catch (e: any) {
+      console.error('Failed to log goal progress:', e?.message || e);
+      return null;
+    }
+  }, [activeGoal]);
 
   const getTodaysTarget = useCallback((goal: Goal) => {
-    if (goal.isCompleted) return 0;
-    const start = new Date(goal.startDate);
+    const isCompleted = goal.progress?.isCompleted ?? goal.isCompleted;
+    if (isCompleted) return 0;
     const end = new Date(goal.targetDate);
     const today = new Date();
-    
-    // Total days for the goal
-    const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)));
-    // Days remaining from today
     const daysRemaining = Math.max(1, Math.ceil((end.getTime() - today.getTime()) / (1000 * 3600 * 24)));
-    
-    const remainingUnits = goal.totalUnits - goal.completedUnits;
+    const remainingUnits = goal.progress ? goal.progress.remainingUnits : (goal.totalUnits - (goal.completedUnits || 0));
     if (remainingUnits <= 0) return 0;
-    
-    // Average daily target required to finish on time
     return Math.ceil(remainingUnits / daysRemaining);
   }, []);
 
   const value = useMemo(() => ({
     goals,
+    activeGoal,
+    isLoading,
+    error,
     addGoal,
     updateGoalProgress,
     deleteGoal,
     getTodaysTarget,
-  }), [goals, addGoal, updateGoalProgress, deleteGoal, getTodaysTarget]);
+    refreshGoals: fetchGoals,
+  }), [goals, activeGoal, isLoading, error, addGoal, updateGoalProgress, deleteGoal, getTodaysTarget, fetchGoals]);
 
   return (
     <GoalsContext.Provider value={value}>

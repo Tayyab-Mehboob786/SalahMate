@@ -1,49 +1,27 @@
-/**
- * SalahMate — Hijri Calendar Module (`/hijri-calendar`)
- *
- * Interactive lunar calendar placeholder displaying current Hijri date alongside
- * Gregorian alignment, full Islamic months navigation, highlighted current day,
- * and upcoming sacred events.
- */
-
-import React, { useState, useMemo } from 'react';
-import { Pressable, StyleSheet, View, ActivityIndicator } from 'react-native';
+import React, { useMemo, useEffect, useRef } from 'react';
+import { Pressable, StyleSheet, View, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { AppIcon, GlassCard, GlassHeader, ScreenContainer } from '@/components';
+import { useRouter } from 'expo-router';
+import { AppIcon, ScreenContainer } from '@/components';
 import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 import { useHijriCalendar } from '@/hooks/hijri/useHijriCalendar';
+import { BlurView } from 'expo-blur';
 
 const ISLAMIC_MONTHS = [
-  'Muharram',
-  'Safar',
-  'Rabi’ al-Awwal',
-  'Rabi’ al-Thani',
-  'Jumada al-Ula',
-  'Jumada al-Akhirah',
-  'Rajab',
-  'Sha’ban',
-  'Ramadan',
-  'Shawwal',
-  'Dhu al-Qi’dah',
-  'Dhu al-Hijjah',
+  'Muharram', 'Safar', 'Rabi’ al-Awwal', 'Rabi’ al-Thani',
+  'Jumada al-Ula', 'Jumada al-Akhirah', 'Rajab', 'Sha’ban',
+  'Ramadan', 'Shawwal', 'Dhu al-Qi’dah', 'Dhu al-Hijjah',
 ];
 
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function HijriCalendarScreen() {
   const theme = useTheme<SalahMateTheme>();
-  const { monthData, loading, error, currentHijriMonth, currentHijriYear, todayHijriStr, nextMonth, prevMonth } = useHijriCalendar();
+  const router = useRouter();
+  const { monthData, loading, error, currentHijriMonth, currentHijriYear, todayHijriStr, nextMonth, prevMonth, setMonth } = useHijriCalendar();
 
-  // Selected month in the horizontal selector
-  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
-
-  // Sync horizontal selector with currentHijriMonth
-  const activeMonthIndex = selectedMonthIndex !== null ? selectedMonthIndex : (currentHijriMonth ? currentHijriMonth - 1 : 0);
-
-  // If user taps horizontal selector, we might want to fetch that month, 
-  // but for now, we rely on Next/Prev month buttons or we can implement it.
-  // Since the hook uses currentHijriMonth, let's keep horizontal selector as display only or navigate.
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const firstDayOffset = useMemo(() => {
     if (!monthData || monthData.length === 0) return 0;
@@ -55,281 +33,328 @@ export default function HijriCalendarScreen() {
   }, [monthData]);
 
   const monthName = currentHijriMonth ? ISLAMIC_MONTHS[currentHijriMonth - 1] : ISLAMIC_MONTHS[0];
-  const yearStr = currentHijriYear ? `${currentHijriYear} AH` : '1446 AH';
+  const yearStr = currentHijriYear ? `${currentHijriYear} AH` : '1448 AH';
 
-  // Find today in monthData
   const todayObj = monthData.find(d => d.hijri.date === todayHijriStr);
-  const displayGregorian = todayObj ? `${todayObj.gregorian.day} ${todayObj.gregorian.month.en} ${todayObj.gregorian.year} CE` : '';
-  const displayHijri = todayObj ? `${parseInt(todayObj.hijri.day, 10)} ${todayObj.hijri.month.en} ${todayObj.hijri.year} AH` : '';
-  const displayWeekday = todayObj ? `${todayObj.gregorian.weekday.en}` : '';
+  const displayGregorian = todayObj ? `${todayObj.gregorian.weekday.en}, ${todayObj.gregorian.day} ${todayObj.gregorian.month.en} ${todayObj.gregorian.year} CE` : '';
+  const displayHijri = todayObj ? `${parseInt(todayObj.hijri.day, 10)} ${todayObj.hijri.month.en}` : '';
 
-  // Get all holidays in this month
-  const events = monthData.filter(d => d.hijri.holidays.length > 0);
+  useEffect(() => {
+    // Scroll to the active month chip
+    if (currentHijriMonth && scrollViewRef.current) {
+      // Rough estimation of scroll position to center the active pill
+      const pillWidth = 100; // approximate
+      const screenWidth = Dimensions.get('window').width;
+      const x = (currentHijriMonth - 1) * pillWidth - (screenWidth / 2) + (pillWidth / 2);
+      scrollViewRef.current.scrollTo({ x: Math.max(0, x), animated: true });
+    }
+  }, [currentHijriMonth]);
 
   return (
-    <ScreenContainer scrollable withPadding withGlassGradient>
-      <GlassHeader title="Hijri Calendar" subtitle="1448 AH · Lunar Islamic Dates" showBack />
+    <ScreenContainer 
+      scrollable={true} 
+      backgroundImage={require('../../assets/backgrounds/hijri-mosque.png')} 
+      withGlassGradient={false}
+      style={{ backgroundColor: 'transparent' }}
+    >
+      {/* Atmospheric Overlay */}
+      <View style={styles.overlay} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.iconBtn}>
+          <AppIcon name="arrow-left" size={28} color="#FFFFFF" />
+        </Pressable>
+        <View style={styles.headerTitles}>
+          <Text variant="titleLarge" style={styles.headerTitle}>Hijri Calendar</Text>
+          <Text variant="labelMedium" style={styles.headerSubtitle}>{yearStr} • Lunar Islamic Dates</Text>
+        </View>
+        <View style={styles.iconBtn}>
+          <AppIcon name="calendar-month-outline" size={26} color="#FFFFFF" />
+        </View>
+      </View>
 
       <View style={styles.content}>
-        {/* Current Date Hero Banner */}
-        <GlassCard borderRadius={24} contentStyle={styles.heroBanner}>
-          <View style={styles.bannerHeader}>
-            <View style={[styles.badge, { backgroundColor: theme.dark ? 'rgba(25, 105, 140, 0.18)' : '#E8F4F8', borderWidth: 1, borderColor: theme.dark ? 'rgba(25, 105, 140, 0.25)' : 'rgba(25, 105, 140, 0.15)' }]}>
-              <AppIcon name="calendar-star" size="sm" variant="primary" />
-              <Text variant="labelSmall" style={{ color: theme.dark ? '#7FC8E8' : '#145874', fontWeight: '700' }}>
-                CURRENT ISLAMIC DATE
-              </Text>
-            </View>
-            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              {displayGregorian || 'Loading...'}
-            </Text>
+        {/* Current Date Card */}
+        <BlurView intensity={20} tint="dark" style={styles.glassCard}>
+          <Text variant="labelSmall" style={styles.cardSuperTitle}>CURRENT ISLAMIC DATE</Text>
+          <Text style={styles.mainHijriDate}>{displayHijri || `${monthName}`}</Text>
+          <Text variant="titleMedium" style={styles.goldYear}>{yearStr}</Text>
+          <View style={styles.gregorianRow}>
+            <AppIcon name="calendar-blank-outline" size={16} color="#A0A0A0" />
+            <Text variant="bodySmall" style={styles.gregorianText}>{displayGregorian || 'Loading...'}</Text>
           </View>
+        </BlurView>
 
-          <Text variant="headlineMedium" style={[styles.hijriTitle, { color: theme.colors.onSurface }]}>
-            {displayHijri || `${monthName} ${yearStr}`}
-          </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '600' }}>
-            {displayWeekday || 'Today'}
-          </Text>
-        </GlassCard>
-
-        {/* Islamic Months Horizontal Selector */}
-        <View style={styles.monthSelector}>
-          {ISLAMIC_MONTHS.slice(0, 6).map((month, index) => {
-            const isSelected = selectedMonthIndex === index;
-            return (
-              <Pressable
-                key={month}
-                style={[
-                  styles.monthChip,
-                  {
-                    backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
-                    borderColor: isSelected ? theme.colors.primary : theme.colors.border,
-                  },
-                ]}
-                onPress={() => setSelectedMonthIndex(index)}
-              >
-                <Text
-                  variant="labelMedium"
-                  style={{
-                    color: isSelected ? theme.colors.textOnPrimary : theme.colors.textPrimary,
-                    fontWeight: isSelected ? '700' : '500',
-                  }}
+        {/* Month Selector */}
+        <View style={styles.monthSelectorContainer}>
+          <ScrollView 
+            ref={scrollViewRef}
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.monthSelectorScroll}
+          >
+            {ISLAMIC_MONTHS.map((month, index) => {
+              const monthNum = index + 1;
+              const isSelected = currentHijriMonth === monthNum;
+              return (
+                <Pressable
+                  key={month}
+                  onPress={() => setMonth(monthNum)}
+                  style={[styles.monthPill, isSelected && styles.monthPillSelected]}
                 >
-                  {month}
-                </Text>
-              </Pressable>
-            );
-          })}
+                  <Text style={[styles.monthPillText, isSelected && styles.monthPillTextSelected]}>
+                    {month}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
 
-        <GlassCard borderRadius={24} contentStyle={styles.calendarCard}>
+        {/* Calendar Grid Card */}
+        <BlurView intensity={20} tint="dark" style={[styles.glassCard, styles.calendarCard]}>
           <View style={styles.calendarHeader}>
-            <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
-              {monthName} {yearStr}
+            <Pressable onPress={prevMonth} style={styles.iconBtnSmall}>
+              <AppIcon name="chevron-left" size={24} color="#FFFFFF" />
+            </Pressable>
+            <Text style={styles.calendarMonthTitle}>
+              {monthName}{'\n'}
+              <Text style={{ fontSize: 16 }}>{yearStr}</Text>
             </Text>
-            <View style={styles.navIcons}>
-              <Pressable onPress={prevMonth} style={{ padding: 4 }}>
-                <AppIcon name="chevron-left" size="lg" variant="secondary" />
-              </Pressable>
-              <Pressable onPress={nextMonth} style={{ padding: 4 }}>
-                <AppIcon name="chevron-right" size="lg" variant="secondary" />
-              </Pressable>
-            </View>
+            <Pressable onPress={nextMonth} style={styles.iconBtnSmall}>
+              <AppIcon name="chevron-right" size={24} color="#FFFFFF" />
+            </Pressable>
           </View>
 
-          {/* Days of Week */}
           <View style={styles.weekHeader}>
-            {WEEK_DAYS.map((day) => (
-              <Text key={day} variant="labelMedium" style={[styles.weekDayText, { color: theme.colors.primary }]}>
-                {day}
-              </Text>
+            {WEEK_DAYS.map(day => (
+              <Text key={day} style={styles.weekDayText}>{day}</Text>
             ))}
           </View>
 
-          {/* Calendar Grid */}
           {loading ? (
-            <View style={{ height: 250, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#E6B967" />
             </View>
           ) : (
             <View style={styles.grid}>
-              {/* Empty slots for month start offset */}
               {Array.from({ length: firstDayOffset }).map((_, slot) => (
                 <View key={`empty-${slot}`} style={styles.dayCell} />
               ))}
-              {monthData.map((dayData) => {
+              
+              {monthData.map(dayData => {
                 const day = parseInt(dayData.hijri.day, 10);
                 const isToday = dayData.hijri.date === todayHijriStr;
                 const hasEvent = dayData.hijri.holidays.length > 0;
 
                 return (
-                  <View
-                    key={`day-${dayData.hijri.date}`}
-                    style={[
-                      styles.dayCell,
-                      isToday && [styles.todayCell, { backgroundColor: theme.colors.primary, shadowColor: theme.colors.shadow }],
-                    ]}
-                  >
-                    <Text
-                      variant="bodyMedium"
-                      style={{
-                        color: isToday ? theme.colors.textOnPrimary : theme.colors.textPrimary,
-                        fontWeight: isToday ? '800' : '600',
-                      }}
-                    >
-                      {day}
-                    </Text>
-                    {isToday ? <View style={[styles.dotIndicator, { backgroundColor: theme.colors.textOnPrimary }]} /> : 
-                     hasEvent ? <View style={[styles.dotIndicator, { backgroundColor: theme.colors.error }]} /> : null}
+                  <View key={`day-${dayData.hijri.date}`} style={styles.dayCell}>
+                    <View style={[styles.dayCircle, isToday && styles.todayCircle]}>
+                      <Text style={[
+                        styles.dayText, 
+                        isToday && styles.todayText,
+                        !isToday && hasEvent && styles.eventText
+                      ]}>
+                        {day}
+                      </Text>
+                    </View>
+                    {hasEvent && <View style={[styles.eventDot, isToday && styles.eventDotToday]} />}
                   </View>
                 );
               })}
             </View>
           )}
-        </GlassCard>
-
-        {/* Upcoming Islamic Events Card */}
-        {events.length > 0 && (
-          <>
-            <Text variant="titleSmall" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-              SACRED EVENTS IN {monthName.toUpperCase()}
-            </Text>
-            {events.map((evt) => (
-              <GlassCard key={evt.hijri.date} borderRadius={20} contentStyle={styles.eventsCard}>
-                <View style={styles.eventRow}>
-                  <View style={[styles.eventDateBox, { backgroundColor: theme.dark ? 'rgba(25, 105, 140, 0.18)' : '#E8F4F8', borderWidth: 1, borderColor: theme.dark ? 'rgba(25, 105, 140, 0.25)' : 'rgba(25, 105, 140, 0.15)' }]}>
-                    <Text variant="titleMedium" style={{ color: theme.dark ? '#7FC8E8' : '#145874', fontWeight: '800' }}>
-                      {parseInt(evt.hijri.day, 10)}
-                    </Text>
-                    <Text variant="labelSmall" style={{ color: theme.dark ? '#7FC8E8' : '#145874' }}>
-                      {evt.hijri.month.en.substring(0, 3).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.eventDetails}>
-                    <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
-                      {evt.hijri.holidays.join(', ')}
-                    </Text>
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      {evt.gregorian.day} {evt.gregorian.month.en} {evt.gregorian.year}
-                    </Text>
-                  </View>
-                </View>
-              </GlassCard>
-            ))}
-          </>
-        )}
+        </BlurView>
       </View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingVertical: spacing.md,
-    gap: spacing.md,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 20, 15, 0.70)', // Subtle atmospheric dark overlay
   },
-  heroBanner: {
-    padding: spacing.lg,
-    gap: spacing.xs,
-  },
-  bannerHeader: {
+  header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 16,
+  },
+  iconBtn: {
+    width: 44, height: 44,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerTitles: {
     alignItems: 'center',
-    marginBottom: spacing.xs,
   },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+  headerTitle: {
+    color: '#E6B967',
+    fontWeight: '700',
   },
-  hijriTitle: {
-    fontWeight: '800',
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
   },
-  monthSelector: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+  content: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    gap: 24,
   },
-  monthChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
+  glassCard: {
+    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    borderRadius: 24,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    overflow: 'hidden',
   },
+  cardSuperTitle: {
+    color: '#E6B967',
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 16,
+  },
+  mainHijriDate: {
+    color: '#FFFFFF',
+    fontSize: 42,
+    fontWeight: '800',
+    textAlign: 'center',
+    lineHeight: 48,
+    marginBottom: 8,
+  },
+  goldYear: {
+    color: '#E6B967',
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  gregorianRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  gregorianText: {
+    color: '#A0A0A0',
+  },
+  
+  monthSelectorContainer: {
+    marginHorizontal: -20,
+  },
+  monthSelectorScroll: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  monthPill: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: 'rgba(20, 20, 20, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  monthPillSelected: {
+    backgroundColor: 'rgba(4, 120, 87, 0.25)',
+    borderColor: '#059669',
+  },
+  monthPillText: {
+    color: '#A0A0A0',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  monthPillTextSelected: {
+    color: '#E6B967',
+    fontWeight: '700',
+  },
+
   calendarCard: {
-    padding: spacing.md,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
   },
   calendarHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 24,
   },
-  navIcons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  iconBtnSmall: {
+    width: 36, height: 36,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  calendarMonthTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 28,
   },
   weekHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: spacing.sm,
+    width: '100%',
+    marginBottom: 16,
   },
   weekDayText: {
-    width: 40,
+    flex: 1,
     textAlign: 'center',
-    fontWeight: '700',
+    color: '#D4D4D4',
+    fontSize: 13,
+    fontWeight: '500',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    width: '100%',
   },
   dayCell: {
-    width: '14.2%',
-    height: 46,
+    width: '14.28%',
+    height: 48,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dayCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 8, // slight squircle matching the Stitch UI
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 2,
-    borderRadius: 14,
   },
-  todayCell: {
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+  todayCircle: {
+    backgroundColor: '#059669',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  dotIndicator: {
+  dayText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  todayText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  eventText: {
+    color: '#E6B967',
+    fontWeight: '700',
+  },
+  eventDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    marginTop: 2,
+    backgroundColor: '#E6B967',
+    marginTop: 3,
   },
-  sectionTitle: {
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    marginLeft: spacing.xs,
+  eventDotToday: {
+    backgroundColor: '#FFFFFF',
   },
-  eventsCard: {
-    padding: spacing.md,
-  },
-  eventRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  eventDateBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+  loadingContainer: {
+    height: 250,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  eventDetails: {
-    flex: 1,
   },
 });

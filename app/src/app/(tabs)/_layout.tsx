@@ -1,14 +1,3 @@
-/**
- * SalahMate Protected Tabs Layout (`/(tabs)`)
- *
- * Apple Health & Headspace inspired bottom navigation tabs for authenticated users.
- * Features exactly 4 core tabs (Home, Track, Timings, Analytics) with 64dp touch height
- * for maximum readability and accessibility.
- *
- * Also wraps the tab hierarchy in `DrawerProvider` and renders `LeftNavigationDrawer`
- * to handle left-side hamburger drawer navigation for all profile & settings features.
- */
-
 import React from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
@@ -16,6 +5,7 @@ import { AppIcon } from '@/components';
 import { useTheme } from 'react-native-paper';
 import { DrawerProvider } from '@/context/DrawerContext';
 import { LeftNavigationDrawer } from '@/components/navigation/LeftNavigationDrawer';
+import { BlurView } from 'expo-blur';
 import type { SalahMateTheme } from '@/theme';
 
 export default function TabsLayout() {
@@ -28,24 +18,33 @@ export default function TabsLayout() {
           screenOptions={{
             headerShown: false,
             animation: 'fade',
-            tabBarActiveTintColor: theme.colors.primary,
-            tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+            tabBarActiveTintColor: '#16A085', // Teal active color
+            tabBarInactiveTintColor: 'rgba(255,255,255,0.7)',
+            tabBarBackground: () => (
+              <BlurView intensity={50} style={StyleSheet.absoluteFill} tint="dark" />
+            ),
             tabBarStyle: {
-              backgroundColor: theme.colors.surface,
-              borderTopColor: theme.colors.border,
-              borderTopWidth: 0.5,
-              elevation: 8,
-              shadowColor: theme.colors.shadow,
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: theme.dark ? 0.3 : 0.05,
-              shadowRadius: 8,
-              paddingTop: 8,
-              paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-              height: Platform.OS === 'ios' ? 84 : 64,
+              position: 'absolute',
+              bottom: Platform.OS === 'ios' ? 32 : 24,
+              left: 20,
+              right: 20,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: 'rgba(0, 0, 0, 0.65)',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.15)',
+              elevation: 0, // Remove android shadow to prefer blur
+              paddingBottom: 0,
+              overflow: 'hidden',
+            },
+            tabBarItemStyle: {
+              paddingVertical: 10,
+              justifyContent: 'center',
+              alignItems: 'center',
             },
             tabBarLabelStyle: {
               fontWeight: '600',
-              fontSize: 11,
+              fontSize: 10,
               letterSpacing: 0.2,
               marginTop: 2,
             },
@@ -58,11 +57,14 @@ export default function TabsLayout() {
               title: 'Dashboard',
               tabBarLabel: 'Home',
               tabBarIcon: ({ color, size, focused }) => (
-                <AppIcon
-                  name={focused ? 'home' : 'home-outline'}
-                  size={size ?? 24}
-                  color={color as string}
-                />
+                <View style={styles.tabIconContainer}>
+                  <AppIcon
+                    name={focused ? 'home' : 'home'}
+                    size={size ?? 22}
+                    color={color as string}
+                  />
+                  {focused && <View style={styles.activeIndicator} />}
+                </View>
               ),
             }}
           />
@@ -74,11 +76,14 @@ export default function TabsLayout() {
               title: 'Prayer Tracking',
               tabBarLabel: 'Track',
               tabBarIcon: ({ color, size, focused }) => (
-                <AppIcon
-                  name={focused ? 'calendar-check' : 'calendar-check-outline'}
-                  size={size ?? 24}
-                  color={color as string}
-                />
+                <View style={styles.tabIconContainer}>
+                  <AppIcon
+                    name={'format-list-checks'}
+                    size={size ?? 22}
+                    color={color as string}
+                  />
+                  {focused && <View style={styles.activeIndicator} />}
+                </View>
               ),
             }}
           />
@@ -90,11 +95,14 @@ export default function TabsLayout() {
               title: 'Prayer Timings',
               tabBarLabel: 'Timings',
               tabBarIcon: ({ color, size, focused }) => (
-                <AppIcon
-                  name={focused ? 'clock-time-four' : 'clock-outline'}
-                  size={size ?? 24}
-                  color={color as string}
-                />
+                <View style={styles.tabIconContainer}>
+                  <AppIcon
+                    name={'clock-time-four'}
+                    size={size ?? 22}
+                    color={color as string}
+                  />
+                  {focused && <View style={styles.activeIndicator} />}
+                </View>
               ),
             }}
           />
@@ -106,16 +114,19 @@ export default function TabsLayout() {
               title: 'Analytics',
               tabBarLabel: 'Analytics',
               tabBarIcon: ({ color, size, focused }) => (
-                <AppIcon
-                  name={focused ? 'chart-arc' : 'chart-line'}
-                  size={size ?? 24}
-                  color={color as string}
-                />
+                <View style={styles.tabIconContainer}>
+                  <AppIcon
+                    name={'chart-bar'}
+                    size={size ?? 22}
+                    color={color as string}
+                  />
+                  {focused && <View style={styles.activeIndicator} />}
+                </View>
               ),
             }}
           />
 
-          {/* Profile Screen (Hidden from bottom tab bar; accessed strictly via left navigation drawer) */}
+          {/* Profile Screen (Hidden) */}
           <Tabs.Screen
             name="profile"
             options={{
@@ -136,5 +147,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: 'relative',
+  },
+  tabIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 24,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: -18,
+    width: 24,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#16A085',
   },
 });

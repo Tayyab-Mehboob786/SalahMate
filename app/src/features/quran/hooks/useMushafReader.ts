@@ -1,22 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getPage, getSurahs } from '@/api/quran.api';
 import { ReaderService } from '../services/reader.service';
 import { MushafPageData, SurahInfo } from '../types/reader.types';
 
-export const useMushafReader = (initialPage: number = 1) => {
+export const useMushafReader = (initialPage: number = 1, translation?: string, reciterId?: number) => {
   const [currentPage, setCurrentPage] = useState<number>(initialPage);
   const [pagesData, setPagesData] = useState<Record<number, MushafPageData>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  const pagesDataRef = useRef(pagesData);
+  useEffect(() => {
+    pagesDataRef.current = pagesData;
+  }, [pagesData]);
 
   // Load a specific page if not already loaded
   const loadPage = useCallback(async (page: number) => {
     if (page < 1 || page > 604) return;
     
     // If we already have it in cache, skip fetching
-    if (pagesData[page]) return;
+    if (pagesDataRef.current[page]) return;
 
     try {
-      const data = await getPage(page);
+      const data = await getPage(page, translation, reciterId);
       const allSurahs = await getSurahs();
 
       // Extract unique surahs in this page
@@ -41,6 +46,8 @@ export const useMushafReader = (initialPage: number = 1) => {
           surahId: a.surahId,
           ayahNumber: a.verseNumber,
           textArabic: a.textUthmani,
+          translation: a.translation,
+          audioUrl: a.audioUrl,
         })),
       };
 
@@ -48,22 +55,32 @@ export const useMushafReader = (initialPage: number = 1) => {
     } catch (error) {
       console.error(`Failed to load page ${page}`, error);
     }
-  }, [pagesData]);
+  }, [translation, reciterId]);
 
-  // Initial load
+  // Handle translation or reciter change
   useEffect(() => {
+    setPagesData({}); // Clear cache on changes
+    pagesDataRef.current = {}; // Also clear ref immediately
     const initialize = async () => {
       setIsLoading(true);
       // Load current, next, and previous pages for smooth swiping
       await Promise.all([
-        loadPage(initialPage),
-        loadPage(initialPage + 1),
-        loadPage(initialPage - 1),
+        loadPage(currentPage),
+        loadPage(currentPage + 1),
+        loadPage(currentPage - 1),
       ]);
       setIsLoading(false);
     };
     
     initialize();
+  }, [translation, reciterId, loadPage]); // Re-run when dependencies change
+
+  // Initial load
+  useEffect(() => {
+    // Only run this specifically for initial page load if needed, 
+    // but the translation useEffect will catch the first mount anyway because `translation` will be evaluated.
+    // Wait, the above useEffect will run on mount, but it uses `currentPage`. 
+    // So we don't need a separate mount useEffect if we merge them, but to be safe:
   }, [initialPage]);
 
   // When page changes, load adjacent pages and save progress
@@ -77,11 +94,11 @@ export const useMushafReader = (initialPage: number = 1) => {
     loadPage(newPage - 1);
 
     // Save progress using the first Surah ID on the page (if data exists)
-    const pageData = pagesData[newPage];
+    const pageData = pagesDataRef.current[newPage];
     if (pageData && pageData.surahs.length > 0) {
       ReaderService.saveProgress(newPage, pageData.surahs[0].id);
     }
-  }, [pagesData, loadPage]);
+  }, [loadPage]);
 
   return {
     currentPage,

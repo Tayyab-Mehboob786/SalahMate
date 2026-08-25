@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -20,9 +21,20 @@ export class PrayersService {
   }
 
   async create(userId: string, createPrayerLogDto: CreatePrayerLogDto) {
-    const { prayer, status, date } = createPrayerLogDto;
+    let { prayer, status, date } = createPrayerLogDto;
     const logDate = date || this.getTodayString();
-    const prayedAt = status === PrayerStatus.COMPLETED ? new Date() : null;
+    const todayStr = this.getTodayString();
+
+    if (logDate > todayStr) {
+      throw new BadRequestException('Cannot log a prayer for a future date.');
+    }
+
+    // If attempting to log COMPLETED for a past date, convert status to QADA
+    if (status === PrayerStatus.COMPLETED && logDate < todayStr) {
+      status = PrayerStatus.QADA;
+    }
+
+    const prayedAt = (status === PrayerStatus.COMPLETED || status === PrayerStatus.QADA) ? new Date() : null;
 
     try {
       return await this.prisma.prayerLog.create({
@@ -64,53 +76,63 @@ export class PrayersService {
   }
 
   async getHistory(userId: string, paginationDto: PaginationDto) {
-    const { page = 1, limit = 10 } = paginationDto;
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 7 } = paginationDto;
 
-    // 1. Get distinct dates for pagination total
-    const distinctDates = await this.prisma.prayerLog.findMany({
-      where: { userId },
-      distinct: ['date'],
-      select: { date: true },
-    });
-    const totalDates = distinctDates.length;
-
-    // 2. Get the specific dates for this page
-    const pagedDates = await this.prisma.prayerLog.groupBy({
-      by: ['date'],
-      where: { userId },
-      orderBy: { date: 'desc' },
-      skip,
-      take: limit,
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true }
     });
 
-    const dateStrings = pagedDates.map(d => d.date);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const todayStr = this.getTodayString();
+    const current = new Date(todayStr);
+    const joinStr = user.createdAt.toISOString().split('T')[0];
+    const join = new Date(joinStr);
+
+    let totalDates = Math.floor((current.getTime() - join.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    if (totalDates < 1) totalDates = 1;
+
+    const dateStrings: string[] = [];
+    const startIndex = (page - 1) * limit;
+
+    for (let i = 0; i < limit; i++) {
+      const dateOffset = startIndex + i;
+      if (dateOffset >= totalDates) break;
+
+      const d = new Date(current);
+      d.setDate(d.getDate() - dateOffset);
+      dateStrings.push(d.toISOString().split('T')[0]);
+    }
 
     // 3. Fetch logs for these dates
-    const logs = await this.prisma.prayerLog.findMany({
+    const logs = dateStrings.length > 0 ? await this.prisma.prayerLog.findMany({
       where: {
         userId,
         date: { in: dateStrings },
       },
-    });
+    }) : [];
 
     // 4. Group by date
     const historyMap = new Map<string, any>();
     
     // Initialize map
     for (const d of dateStrings) {
+      const isPastDate = d < todayStr;
       historyMap.set(d, {
         date: d,
         completedCount: 0,
         totalCount: 5,
         percentage: 0,
         statuses: {
-          FAJR: null,
-          DHUHR: null,
-          ASR: null,
-          MAGHRIB: null,
-          ISHA: null,
-        }
+          FAJR: isPastDate ? PrayerStatus.MISSED : null,
+          DHUHR: isPastDate ? PrayerStatus.MISSED : null,
+          ASR: isPastDate ? PrayerStatus.MISSED : null,
+          MAGHRIB: isPastDate ? PrayerStatus.MISSED : null,
+          ISHA: isPastDate ? PrayerStatus.MISSED : null,
+        },
       });
     }
 
@@ -119,7 +141,7 @@ export class PrayersService {
       const entry = historyMap.get(log.date);
       if (entry) {
         entry.statuses[log.prayer] = log.status;
-        if (log.status === PrayerStatus.COMPLETED) {
+        if (log.status === PrayerStatus.COMPLETED || log.status === PrayerStatus.QADA) {
           entry.completedCount++;
         }
       }
@@ -144,7 +166,10 @@ export class PrayersService {
 
   async getStreak(userId: string) {
     const logs = await this.prisma.prayerLog.findMany({
-      where: { userId, status: PrayerStatus.COMPLETED },
+      where: {
+        userId,
+        status: { in: [PrayerStatus.COMPLETED, PrayerStatus.QADA] },
+      },
       select: { date: true },
     });
 

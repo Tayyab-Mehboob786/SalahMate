@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions, ScrollView } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { LineChart } from 'react-native-gifted-charts';
-import { GlassCard } from '@/components/glass/GlassCard';
-import { spacing, type SalahMateTheme } from '@/theme';
+import { spacing } from '@/theme';
 
 interface MonthlyTrendChartProps {
   data: { label: string; value: number }[];
@@ -12,16 +11,12 @@ interface MonthlyTrendChartProps {
 const { width } = Dimensions.get('window');
 
 export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
-  const theme = useTheme<SalahMateTheme>();
-  
   if (!data || data.length === 0) return null;
 
   return (
-    <GlassCard borderRadius={16} style={styles.card}>
+    <View style={styles.card}>
       <View style={styles.header}>
-        <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
-          Completion Trend
-        </Text>
+        <Text style={styles.titleText}>Completion Trend</Text>
       </View>
       
       <View style={styles.chartContainer}>
@@ -32,28 +27,34 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
         >
           <LineChart
             data={data}
-            width={Math.max(width - spacing.md * 2 - 32, data.length * 60)} // Ensure minimum comfortable spacing per point
-            height={180}
+            width={Math.max(width - spacing.md * 2 - 32, data.length * 60)} 
+            height={160}
             spacing={60}
             initialSpacing={20}
             endSpacing={40}
-            color={theme.colors.primary}
+            color="#00E5FF"
             thickness={3}
-            dataPointsColor={theme.colors.primary}
+            dataPointsColor="#00E5FF"
             dataPointsRadius={4}
             hideRules
             maxValue={100}
             noOfSections={5}
             yAxisLabelSuffix="%"
-            yAxisTextStyle={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}
-            yAxisColor={theme.colors.outlineVariant}
-            xAxisColor={theme.colors.outlineVariant}
+            yAxisTextStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}
+            xAxisLabelTextStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}
+            yAxisColor="rgba(255,255,255,0.3)"
+            xAxisColor="rgba(255,255,255,0.3)"
+            curved
+            areaChart
+            startFillColor="#00E5FF"
+            startOpacity={0.4}
+            endFillColor="#00E5FF"
+            endOpacity={0.0}
             pointerConfig={{
               pointerStripHeight: 160,
-              pointerStripColor: theme.colors.onSurfaceVariant,
+              pointerStripColor: 'rgba(255,255,255,0.5)',
               pointerStripWidth: 2,
-              pointerColor: theme.colors.primary,
+              pointerColor: '#00E5FF',
               radius: 6,
               pointerLabelWidth: 80,
               pointerLabelHeight: 30,
@@ -61,8 +62,8 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
               autoAdjustPointerLabelPosition: true,
               pointerLabelComponent: (items: any) => {
                 return (
-                  <View style={[styles.pointerLabel, { backgroundColor: theme.colors.surfaceVariant }]}>
-                    <Text style={{ color: theme.colors.onSurface, fontSize: 12, fontWeight: '700' }}>
+                  <View style={styles.pointerLabel}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>
                       {items[0].value}%
                     </Text>
                   </View>
@@ -75,7 +76,7 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
           />
         </ScrollView>
       </View>
-    </GlassCard>
+    </View>
   );
 }
 
@@ -83,13 +84,24 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    overflow: 'hidden',
   },
   header: {
     padding: spacing.md,
     paddingBottom: 0,
   },
+  titleText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   chartContainer: {
-    padding: spacing.md,
+    paddingTop: 10,
+    paddingBottom: 16,
     alignItems: 'center',
   },
   pointerLabel: {
@@ -98,5 +110,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
 });

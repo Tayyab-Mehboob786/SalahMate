@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useSharedPrayerTimes } from '@/context';
 import { prayersApi, PrayerLog, PrayerStatus } from '@/api/prayers.api';
 import type { PrayerName } from '@/types/prayer.types';
@@ -69,6 +70,12 @@ export function useLivePrayerTimings(): LivePrayerData {
     }
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchLogs();
+    }, [fetchLogs])
+  );
+
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
@@ -89,50 +96,66 @@ export function useLivePrayerTimings(): LivePrayerData {
   const { currentPrayer, nextPrayer, uiPrayers } = useMemo(() => {
     let current: UIPrayerTiming | null = null;
     let next: UIPrayerTiming | null = null;
-    
-    const mapped: UIPrayerTiming[] = prayers.map((p) => {
-      const log = logs.find(l => l.prayer === p.name.toUpperCase());
-      return {
-        ...p,
-        status: log ? log.status : 'PENDING',
-        isCurrent: false, // will set below
-      };
-    });
+    const currentMs = now.getTime();
+    const sunriseTimeStr = prayerTimesData?.timings.sunrise || '';
+    const sunriseMs = sunriseTimeStr ? parseTime(sunriseTimeStr).getTime() : 0;
 
-    if (mapped.length > 0) {
-      const currentMs = now.getTime();
-      
+    if (prayers.length > 0) {
       // Find the next prayer
-      for (let i = 0; i < mapped.length; i++) {
-        const pDate = parseTime(mapped[i].time).getTime();
+      for (let i = 0; i < prayers.length; i++) {
+        const pDate = parseTime(prayers[i].time).getTime();
         if (pDate > currentMs) {
-          next = mapped[i];
-          current = i > 0 ? mapped[i - 1] : null; // If Fajr is next, current is null (or Isha from yesterday, but we'll say null for now)
+          next = { ...prayers[i], status: 'PENDING', isCurrent: false };
+          current = i > 0 ? { ...prayers[i - 1], status: 'PENDING', isCurrent: true } : null;
           break;
         }
       }
       
       // If all passed today, next is Fajr tomorrow, current is Isha
       if (!next) {
-        current = mapped[mapped.length - 1]; // Isha
-        next = mapped[0]; // Fajr
+        current = { ...prayers[prayers.length - 1], status: 'PENDING', isCurrent: true }; // Isha
+        next = { ...prayers[0], status: 'PENDING', isCurrent: false }; // Fajr
       }
       
-      // If Fajr is next, current might be Isha from yesterday (represented as Isha)
       if (next.name === 'Fajr' && !current) {
-        current = mapped[mapped.length - 1]; // Isha
+        current = { ...prayers[prayers.length - 1], status: 'PENDING', isCurrent: true }; // Isha
       }
 
-      if (current) {
-        const currIndex = mapped.findIndex(p => p.name === current!.name);
-        if (currIndex !== -1) {
-          mapped[currIndex].isCurrent = true;
-        }
+      // Fajr expires at Sunrise time (not Dhuhr). If sunrise has passed, Fajr is no longer active.
+      if (current?.name === 'Fajr' && sunriseMs > 0 && currentMs >= sunriseMs) {
+        current = null;
       }
     }
-    
+
+    const mapped: UIPrayerTiming[] = prayers.map((p) => {
+      const log = logs.find(l => l.prayer === p.name.toUpperCase());
+      const isCurrent = current?.name === p.name;
+      const pDate = parseTime(p.time).getTime();
+      
+      let hasPassed = false;
+      if (p.name === 'Fajr') {
+        // Fajr expires at Sunrise time (NOT Dhuhr)!
+        hasPassed = sunriseMs > 0 ? currentMs >= sunriseMs : (pDate < currentMs && !isCurrent);
+      } else {
+        hasPassed = pDate < currentMs && !isCurrent;
+      }
+
+      let status: PrayerStatus | 'PENDING' = 'PENDING';
+      if (log) {
+        status = log.status;
+      } else if (hasPassed) {
+        status = 'MISSED';
+      }
+
+      return {
+        ...p,
+        status,
+        isCurrent,
+      };
+    });
+
     return { currentPrayer: current, nextPrayer: next, uiPrayers: mapped };
-  }, [prayers, logs, now]);
+  }, [prayers, logs, now, prayerTimesData]);
 
   const countdown = useMemo(() => {
     if (!nextPrayer) return '00:00:00';

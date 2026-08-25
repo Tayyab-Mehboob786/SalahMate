@@ -1,27 +1,24 @@
-/**
- * SalahMate Profile Screen (`/(tabs)/profile`)
- *
- * Apple Health & Headspace inspired user profile card, badges summary,
- * icon-enhanced preferences list, and clean navigation shortcuts.
- */
-
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AppIcon } from '@/components';
-import { Text, useTheme } from 'react-native-paper';
+import { AppIcon, ScreenContainer } from '@/components';
+import { Text } from 'react-native-paper';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { GlassAvatar, GlassButton, GlassCard, GlassHeader, ScreenContainer } from '@/components';
 import { spacing } from '@/theme';
-import type { SalahMateTheme } from '@/theme';
+import { BlurView } from 'expo-blur';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
-  const theme = useTheme<SalahMateTheme>();
+  const { user } = useAuth();
 
-  const userName = user?.fullName || 'User';
-  const userEmail = user?.email || 'user@example.com';
+  const userName = user?.fullName || 'Tayyab Mehboob';
+  const userEmail = user?.email || 'tayyabmeh91@gmail.com';
+  const userCountry = user?.country || 'Pakistan';
+  const userCity = user?.city || 'Islamabad';
+  const userTimezone = user?.timezone || 'UTC+05:00';
+  const userTheme = user?.theme || 'System Default';
+  const userJoined = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'August 2026';
+  
   const initials = userName
     .split(' ')
     .map((part: string) => part[0])
@@ -29,207 +26,178 @@ export default function ProfileScreen() {
     .slice(0, 2)
     .toUpperCase();
 
-  const handleLogout = () => {
-    logout();
-    router.replace('/(auth)/login');
+  const handleEditProfile = () => {
+    router.push('/settings');
   };
 
+  const listItems = [
+    { icon: 'account-circle', label: 'Full Name', value: userName },
+    { icon: 'email', label: 'Email', value: userEmail },
+    { icon: 'web', label: 'Country', value: userCountry },
+    { icon: 'city-variant', label: 'City', value: userCity },
+    { icon: 'clock', label: 'Timezone', value: userTimezone },
+    { icon: 'palette', label: 'Theme', value: userTheme },
+    { icon: 'calendar-month', label: 'Joined', value: userJoined },
+  ];
+
   return (
-    <ScreenContainer scrollable withPadding withGlassGradient>
-      <GlassHeader title="User Profile" subtitle="Spiritual Journey & Preferences" showBack />
+    <ScreenContainer 
+      scrollable={false} 
+      backgroundImage={require('../../../assets/backgrounds/profile-mosque.png')}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Top Spacer for safe area / status bar */}
+        <View style={{ height: 60 }} />
 
-      <View style={styles.content}>
-        {/* Hero User Card */}
-        <GlassCard borderRadius={24} contentStyle={styles.profileCardContent}>
-          <GlassAvatar initials={initials} size={84} style={styles.avatar} />
-          <Text variant="headlineSmall" style={[styles.name, { color: theme.colors.onSurface }]}>
-            {userName}
-          </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {userEmail}
-          </Text>
-          <View style={[styles.memberBadge, { backgroundColor: theme.colors.primaryContainer }]}>
-            <AppIcon name="shield-check" size="sm" variant="primary" />
-            <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-              PRO SPIRITUAL GUARDIAN
-            </Text>
+        {/* Identity Hero Section */}
+        <View style={styles.heroSection}>
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
-        </GlassCard>
-
-        {/* Quick Stats Summary */}
-        <View style={styles.statsRow}>
-          <GlassCard borderRadius={16} style={styles.statCol} contentStyle={styles.statContent}>
-            <AppIcon name="fire" size="lg" variant="achievement" />
-            <Text variant="titleLarge" style={[styles.statVal, { color: theme.colors.onSurface }]}>
-              14 Days
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              Current Streak
-            </Text>
-          </GlassCard>
-
-          <GlassCard borderRadius={16} style={styles.statCol} contentStyle={styles.statContent}>
-            <AppIcon name="trophy" size="lg" variant="primary" />
-            <Text variant="titleLarge" style={[styles.statVal, { color: theme.colors.onSurface }]}>
-              8 Badges
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              Achievements
-            </Text>
-          </GlassCard>
+          <Text style={styles.heroName}>{userName}</Text>
+          <Text style={styles.heroEmail}>{userEmail}</Text>
         </View>
 
-        {/* Prayer Preferences */}
-        <GlassCard borderRadius={20}>
-          <View style={styles.cardHeaderRow}>
-            <Text variant="titleSmall" style={[styles.cardHeader, { color: theme.colors.onSurface }]}>
-              PRAYER CALCULATION SETTINGS
-            </Text>
-            <AppIcon name="cog-outline" size="md" variant="secondary" />
+        {/* Profile Info Glass Container */}
+        <View style={styles.infoContainerWrapper}>
+          <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+          <View style={styles.infoContainer}>
+            {listItems.map((item, index) => (
+              <View key={item.label}>
+                <View style={styles.infoRow}>
+                  <AppIcon name={item.icon as any} size={28} color="#FFFFFF" style={styles.infoIcon} />
+                  <View style={styles.infoTextContainer}>
+                    <Text style={styles.infoLabel}>{item.label}</Text>
+                    <Text style={styles.infoValue} numberOfLines={1}>{item.value}</Text>
+                  </View>
+                </View>
+                {index < listItems.length - 1 && <View style={styles.divider} />}
+              </View>
+            ))}
           </View>
-
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
-            <View style={styles.settingLabelBox}>
-              <AppIcon name="calculator-variant" size="md" variant="primary" />
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                Calculation
-              </Text>
-            </View>
-            <Text
-              variant="bodyMedium"
-              style={[styles.settingValue, { color: theme.colors.onSurface }]}
-            >
-              Muslim World League
-            </Text>
-          </View>
-
-          <View style={[styles.settingRow, { borderBottomColor: theme.colors.border }]}>
-            <View style={styles.settingLabelBox}>
-              <AppIcon name="weather-partly-cloudy" size="md" variant="primary" />
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                Asr Juristic Method
-              </Text>
-            </View>
-            <Text
-              variant="bodyMedium"
-              style={[styles.settingValue, { color: theme.colors.onSurface }]}
-            >
-              Shafi&apos;i / Maliki
-            </Text>
-          </View>
-
-          <View style={styles.settingRowLast}>
-            <View style={styles.settingLabelBox}>
-              <AppIcon name="earth" size="md" variant="primary" />
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                High Latitude Rule
-              </Text>
-            </View>
-            <Text
-              variant="bodyMedium"
-              style={[styles.settingValue, { color: theme.colors.onSurface }]}
-            >
-              Middle of Night
-            </Text>
-          </View>
-        </GlassCard>
-
-        {/* Actions */}
-        <View style={styles.actionSection}>
-          <GlassButton
-            label="Full Application Settings"
-            variant="primary"
-            icon={<AppIcon name="tune" size="md" variant="onPrimary" />}
-            onPress={() => router.push('/settings')}
-          />
-          <GlassButton
-            label="Sign Out of Account"
-            variant="outlined"
-            icon={<AppIcon name="logout" size="md" variant="error" />}
-            onPress={handleLogout}
-          />
         </View>
-      </View>
+
+        {/* Edit Profile Button */}
+        <Pressable 
+          style={({ pressed }) => [styles.editBtn, pressed && { opacity: 0.8 }]}
+          onPress={handleEditProfile}
+        >
+          <AppIcon name="square-edit-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+          <Text style={styles.editBtnText}>Edit Profile</Text>
+        </Pressable>
+
+        {/* Bottom Padding for Nav Bar */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingVertical: spacing.md,
-    gap: spacing.md,
-  },
-  profileCardContent: {
+  scrollContent: {
+    paddingHorizontal: 24,
     alignItems: 'center',
-    paddingVertical: spacing.lg,
   },
-  avatar: {
-    marginBottom: spacing.md,
+  // Hero Section
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+    width: '100%',
   },
-  name: {
-    fontWeight: '800',
+  avatarContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  avatarText: {
+    fontSize: 48,
+    fontWeight: '400',
+    color: '#FFFFFF',
+    fontFamily: 'serif',
+  },
+  heroName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
     marginBottom: 4,
   },
-  memberBadge: {
+  heroEmail: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.9)',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  // Info List
+  infoContainerWrapper: {
+    width: '100%',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    marginBottom: 24,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  infoContainer: {
+    paddingVertical: 12,
+  },
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 16,
-    marginTop: spacing.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
+  infoIcon: {
+    marginRight: 16,
+    opacity: 1,
   },
-  statCol: {
+  infoTextContainer: {
     flex: 1,
-    marginVertical: 0,
+    justifyContent: 'center',
   },
-  statContent: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    gap: 4,
+  infoLabel: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '400',
+    marginBottom: 2,
   },
-  statVal: {
-    fontWeight: '800',
-    marginTop: 2,
+  infoValue: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginHorizontal: 20,
   },
-  cardHeader: {
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  settingRowLast: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-  },
-  settingLabelBox: {
+  // Edit Button
+  editBtn: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'center',
+    backgroundColor: '#0F5B66', // Dark cyan as per screenshot
+    paddingVertical: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 229, 255, 0.1)',
   },
-  settingValue: {
+  editBtnText: {
+    fontSize: 16,
     fontWeight: '600',
-  },
-  actionSection: {
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xl,
+    color: '#FFFFFF',
   },
 });

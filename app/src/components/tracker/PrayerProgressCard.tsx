@@ -13,6 +13,7 @@ interface PrayerProgressCardProps {
   percentage: number;
   motivationMessage: string;
   progressColor: string;
+  statuses?: string[];
 }
 
 export function PrayerProgressCard({
@@ -21,6 +22,7 @@ export function PrayerProgressCard({
   percentage,
   motivationMessage,
   progressColor,
+  statuses,
 }: PrayerProgressCardProps) {
   const theme = useTheme<SalahMateTheme>();
 
@@ -32,6 +34,7 @@ export function PrayerProgressCard({
       <View style={styles.container}>
         <ProgressRing
           progress={progressValue}
+          statuses={statuses}
           size={72}
           strokeWidth={8}
           valueText={`${percentage}%`}

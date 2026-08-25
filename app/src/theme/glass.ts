@@ -1,20 +1,15 @@
 /**
  * SalahMate — Glassmorphism Design Tokens (`src/theme/glass.ts`)
  *
- * Premium glass effects: subtle frosted white cards (15–20% opacity glass over white),
+ * Premium glass effects: subtle frosted translucent cards,
  * gentle blur, soft borders, and light shadows.
  *
- * Design rules:
- * - Never use dark transparent glass over harsh dark backgrounds
- * - Light mode: White glass cards on warm off-white (#FAFAF8) backgrounds
- * - Dark mode: Subtle elevated charcoal with green tint — depth, not heavy blur
- * - Glass is used sparingly for premium feel, not as the default surface
+ * Unified Theme:
+ * - Glass is used for premium feel across the single app theme.
  */
 
-import { useTheme } from 'react-native-paper';
-
 export interface GlassTokens {
-  /** Blur intensity for `BlurView` — kept low for performance and clarity */
+  /** Blur intensity for `BlurView` */
   blurIntensity: number;
   /** Tint mode for `BlurView` */
   blurTint: 'light' | 'dark' | 'default';
@@ -24,7 +19,7 @@ export interface GlassTokens {
   buttonBackground: string;
   /** Subtle border for glass containers */
   border: string;
-  /** Soft screen background gradient */
+  /** Soft screen background gradient (fallback if image not loaded) */
   backgroundGradient: readonly [string, string];
   /** Accent highlight gradient (gold) */
   accentGradient: readonly [string, string];
@@ -32,32 +27,20 @@ export interface GlassTokens {
   primaryGradient: readonly [string, string];
 }
 
-export const lightGlassTokens: GlassTokens = {
-  blurIntensity: 20,
-  blurTint: 'light',
-  cardBackground: 'rgba(255, 255, 255, 0.82)', // White glass — 82% opacity
-  buttonBackground: 'rgba(255, 255, 255, 0.75)', // White glass button
-  border: 'rgba(45, 52, 54, 0.05)', // Very subtle warm gray border
-  backgroundGradient: ['#FAFAF8', '#F5F6F3'] as const, // Warm off-white
-  accentGradient: ['rgba(196, 149, 12, 0.08)', 'rgba(196, 149, 12, 0.02)'] as const,
-  primaryGradient: ['rgba(21, 128, 61, 0.07)', 'rgba(21, 128, 61, 0.02)'] as const,
-};
-
-export const darkGlassTokens: GlassTokens = {
-  blurIntensity: 24,
-  blurTint: 'dark',
-  cardBackground: 'rgba(30, 36, 34, 0.85)', // Green-tinted charcoal
-  buttonBackground: 'rgba(38, 44, 42, 0.85)', // Elevated charcoal
-  border: 'rgba(255, 255, 255, 0.10)', // Subtle white border
-  backgroundGradient: ['#161A18', '#1A1E1C'] as const, // Green-tinted dark
-  accentGradient: ['rgba(212, 167, 44, 0.12)', 'rgba(212, 167, 44, 0.03)'] as const,
-  primaryGradient: ['rgba(74, 222, 128, 0.10)', 'rgba(74, 222, 128, 0.03)'] as const,
+export const glassTokens: GlassTokens = {
+  blurIntensity: 24, // Medium blur for premium glass feel
+  blurTint: 'light', // Light tint for clean glass
+  cardBackground: 'rgba(255, 255, 255, 0.75)', // White glass — 75% opacity
+  buttonBackground: 'rgba(255, 255, 255, 0.85)', // White glass button
+  border: 'rgba(255, 255, 255, 0.3)', // Subtle white border for frosted edge
+  backgroundGradient: ['#F8F6F1', '#E5E7EB'] as const, // Ivory fallback gradient
+  accentGradient: ['rgba(200, 162, 76, 0.15)', 'rgba(200, 162, 76, 0.05)'] as const, // Gold
+  primaryGradient: ['rgba(34, 160, 107, 0.15)', 'rgba(34, 160, 107, 0.05)'] as const, // Emerald
 };
 
 /**
- * Hook to retrieve glass tokens for the active theme (light or dark).
+ * Hook to retrieve glass tokens for the unified theme.
  */
 export function useGlassTheme(): GlassTokens {
-  const theme = useTheme();
-  return theme.dark ? darkGlassTokens : lightGlassTokens;
+  return glassTokens;
 }

@@ -1,75 +1,39 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { BarChart } from 'react-native-gifted-charts';
-import { GlassCard } from '@/components/glass/GlassCard';
-import { spacing, type SalahMateTheme } from '@/theme';
+import { View, StyleSheet } from 'react-native';
+import { Text } from 'react-native-paper';
+import { spacing } from '@/theme';
 
 interface WeeklyCompletionChartProps {
   weeklyCompletion: number;
 }
 
-const { width } = Dimensions.get('window');
-
 export function WeeklyCompletionChart({ weeklyCompletion }: WeeklyCompletionChartProps) {
-  const theme = useTheme<SalahMateTheme>();
-
-  // A simple donut/pie chart would be better, but user requested a Bar Chart.
-  // We can show a single bar for "This Week" vs a target of 100%.
   
-  const barData = [
-    {
-      value: weeklyCompletion,
-      label: 'Current',
-      frontColor: theme.colors.primary,
-      topLabelComponent: () => (
-        <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, marginBottom: 4 }}>
-          {weeklyCompletion}%
-        </Text>
-      ),
-    },
-    {
-      value: 100,
-      label: 'Target',
-      frontColor: theme.colors.surfaceVariant,
-      topLabelComponent: () => (
-        <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, marginBottom: 4 }}>
-          100%
-        </Text>
-      ),
-    }
-  ];
+  if (weeklyCompletion === undefined || weeklyCompletion === null) return null;
 
   return (
-    <GlassCard borderRadius={16} style={styles.card}>
+    <View style={styles.card}>
       <View style={styles.header}>
-        <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
-          Weekly Consistency
-        </Text>
+        <Text style={styles.titleText}>Weekly Consistency</Text>
       </View>
       
       <View style={styles.chartContainer}>
-        <BarChart
-          data={barData}
-          width={200}
-          height={160}
-          barWidth={40}
-          spacing={40}
-          roundedTop
-          roundedBottom
-          hideRules
-          maxValue={100}
-          noOfSections={5}
-          yAxisLabelSuffix="%"
-          xAxisThickness={0}
-          yAxisThickness={0}
-          yAxisTextStyle={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}
-          xAxisLabelTextStyle={{ color: theme.colors.onSurface, fontSize: 12, fontWeight: '600' }}
-          disablePress
-          isAnimated
-        />
+        <View style={styles.barContainer}>
+          <Text style={styles.dayText}>This Week</Text>
+          
+          <View style={styles.progressTrack}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${weeklyCompletion}%` }
+              ]} 
+            />
+          </View>
+          
+          <Text style={styles.percentageText}>{weeklyCompletion}%</Text>
+        </View>
       </View>
-    </GlassCard>
+    </View>
   );
 }
 
@@ -77,14 +41,54 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    overflow: 'hidden',
   },
   header: {
     padding: spacing.md,
     paddingBottom: 0,
   },
+  titleText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   chartContainer: {
     padding: spacing.md,
+    gap: 12,
+  },
+  barContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+  },
+  dayText: {
+    width: 65,
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  progressTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 4,
+    marginHorizontal: spacing.md,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#00E5FF',
+    borderRadius: 4,
+  },
+  percentageText: {
+    width: 40,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'right',
   },
 });

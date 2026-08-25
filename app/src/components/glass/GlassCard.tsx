@@ -1,13 +1,12 @@
 /**
  * SalahMate — GlassCard Component
  *
- * Premium card with subtle frosted glass effect on iOS, clean elevated surface everywhere else.
- * White cards with soft shadows and subtle border for an Apple Health / Notion aesthetic.
- * Includes optional gentle press animation.
+ * Premium card with a frosted glass effect using `expo-blur`.
+ * Unified theme with translucent background, soft shadow, and subtle border.
  */
 
 import React from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, {
@@ -16,10 +15,8 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { useTheme } from 'react-native-paper';
 import { useGlassTheme } from '@/theme/glass';
-import { shadows, spacing } from '@/theme';
-import type { SalahMateTheme } from '@/theme';
+import { spacing } from '@/theme';
 
 export interface GlassCardProps {
   children: React.ReactNode;
@@ -42,7 +39,6 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   accessibilityLabel,
   accessibilityHint,
 }) => {
-  const theme = useTheme<SalahMateTheme>();
   const glass = useGlassTheme();
   const scale = useSharedValue<number>(1);
 
@@ -65,7 +61,6 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     }
   });
 
-  // Apply default margin if no margin is defined in layoutStyle
   const hasCustomMargin =
     'margin' in layoutStyle ||
     'marginVertical' in layoutStyle ||
@@ -82,7 +77,6 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     transform: [{ scale: scale.value }],
   }));
 
-  /* eslint-disable react-hooks/immutability */
   const handlePressIn = () => {
     if (onPress) {
       if (typeof scale.set === 'function') {
@@ -102,23 +96,36 @@ export const GlassCard: React.FC<GlassCardProps> = ({
       }
     }
   };
-  /* eslint-enable react-hooks/immutability */
 
   const cardContent = (
     <View
       style={[
         styles.container,
-        {
-          borderRadius,
-          backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
-          borderColor: theme.dark ? theme.colors.border : '#E8ECEF',
-        },
+        { borderRadius },
         shouldStretch && { flex: 1, width: '100%' },
         withShadow && styles.modernShadow,
         visualStyle,
       ]}
     >
-      <View style={[styles.content, { borderRadius }, shouldStretch && { flex: 1 }, contentStyle]}>{children}</View>
+      <BlurView
+        intensity={glass.blurIntensity}
+        tint={glass.blurTint as any}
+        style={[styles.blurView, { borderRadius }]}
+      >
+        <View
+          style={[
+            styles.overlay,
+            {
+              borderRadius,
+              backgroundColor: glass.cardBackground,
+              borderColor: glass.border,
+            },
+          ]}
+        />
+        <View style={[styles.content, { borderRadius }, shouldStretch && { flex: 1 }, contentStyle]}>
+          {children}
+        </View>
+      </BlurView>
     </View>
   );
 
@@ -151,20 +158,25 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    borderWidth: 1,
     overflow: 'visible', // allow shadows to render
+  },
+  blurView: {
+    overflow: 'hidden',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
   },
   content: {
     padding: spacing.md,
     position: 'relative',
     zIndex: 1,
-    overflow: 'hidden',
   },
   modernShadow: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 4,
   },
 });

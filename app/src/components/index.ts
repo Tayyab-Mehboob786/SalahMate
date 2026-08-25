@@ -15,6 +15,8 @@ export * from './goals/GoalTemplateCard';
 export * from './layout';
 export * from './dashboard/DashboardGoalWidget';
 export * from './dashboard/DailySummaryCard';
+export * from './dashboard/CircularProgress';
+export * from './dashboard/PrayerTimeline';
 export * from './feedback';
 export * from './glass';
 export * from './analytics/AnalyticsSummaryCard';

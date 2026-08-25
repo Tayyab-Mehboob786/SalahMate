@@ -26,12 +26,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isTyping }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View style={[styles.container, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
-        <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outlineVariant }]}>
+      <View style={[styles.container, { backgroundColor: 'transparent', borderTopColor: 'rgba(255,255,255,0.1)' }]}>
+        <View style={[styles.inputWrapper, { backgroundColor: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.15)' }]}>
           <TextInput
-            style={[styles.input, { color: theme.colors.onSurface }]}
+            style={[styles.input, { color: '#FFFFFF' }]}
             placeholder="Ask SalahMate AI..."
-            placeholderTextColor={theme.colors.onSurfaceVariant}
+            placeholderTextColor="rgba(255,255,255,0.5)"
             value={text}
             onChangeText={setText}
             multiline
@@ -40,7 +40,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isTyping }) => {
           <Pressable 
             style={[
               styles.sendButton, 
-              { backgroundColor: text.trim().length > 0 && !isTyping ? theme.colors.primary : theme.colors.surfaceDisabled }
+              { backgroundColor: text.trim().length > 0 && !isTyping ? '#8EDCB8' : 'rgba(255,255,255,0.1)' }
             ]}
             onPress={handleSend}
             disabled={text.trim().length === 0 || isTyping}
@@ -48,7 +48,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isTyping }) => {
             <AppIcon 
               name="send" 
               size={18} 
-              color={text.trim().length > 0 && !isTyping ? theme.colors.onPrimary : theme.colors.onSurfaceDisabled} 
+              color={text.trim().length > 0 && !isTyping ? '#000000' : 'rgba(255,255,255,0.3)'} 
             />
           </Pressable>
         </View>

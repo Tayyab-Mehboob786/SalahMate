@@ -16,6 +16,14 @@ export interface ApiAyah {
   pageNumber: number;
   juzNumber: number;
   hizbNumber: number;
+  translation?: string;
+  audioUrl?: string;
+}
+
+export interface ApiReciter {
+  id: number;
+  name: string;
+  style: string | null;
 }
 
 export interface ApiPage {

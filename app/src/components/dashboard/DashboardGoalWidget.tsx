@@ -12,9 +12,11 @@ import type { SalahMateTheme } from '@/theme';
 export const DashboardGoalWidget: React.FC = () => {
   const theme = useTheme<SalahMateTheme>();
   const router = useRouter();
-  const { goals, getTodaysTarget } = useGoals();
+  const { goals, activeGoal: ctxActiveGoal, getTodaysTarget, isLoading } = useGoals();
 
-  const activeGoal = goals.find(g => !g.isCompleted);
+  const activeGoal = (ctxActiveGoal && ctxActiveGoal.lifecycleStatus === 'ACTIVE')
+    ? ctxActiveGoal
+    : goals.find(g => g.lifecycleStatus === 'ACTIVE');
 
   const navigateToGoals = () => {
     if (activeGoal) {
@@ -23,6 +25,10 @@ export const DashboardGoalWidget: React.FC = () => {
       router.push('/goals/create');
     }
   };
+
+  if (isLoading && !activeGoal) {
+    return null; // Or render quiet skeleton if appropriate
+  }
 
   if (!activeGoal) {
     return (
@@ -44,9 +50,11 @@ export const DashboardGoalWidget: React.FC = () => {
     );
   }
 
-  const progressPercentage = activeGoal.totalUnits > 0 
-    ? Math.min(100, Math.round((activeGoal.completedUnits / activeGoal.totalUnits) * 100))
-    : 0;
+  const progressPercentage = activeGoal.progress?.progressPercentage ?? (
+    activeGoal.totalUnits > 0 
+      ? Math.min(100, Math.round(((activeGoal.completedUnits || 0) / activeGoal.totalUnits) * 100))
+      : 0
+  );
 
   const start = new Date(activeGoal.startDate);
   const end = new Date(activeGoal.targetDate);

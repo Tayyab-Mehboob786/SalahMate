@@ -19,53 +19,90 @@ export function PeriodFilter({ period, onPeriodChange }: PeriodFilterProps) {
   const theme = useTheme<SalahMateTheme>();
 
   return (
-    <View style={styles.container}>
-      {PERIODS.map((p) => {
-        const isActive = p.value === period;
-        return (
-          <Pressable
-            key={p.value}
-            onPress={() => onPeriodChange(p.value)}
-            style={[
-              styles.tab,
-              {
-                backgroundColor: isActive ? theme.colors.primary : theme.colors.surfaceVariant,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                {
-                  color: isActive ? theme.colors.onPrimary : theme.colors.onSurfaceVariant,
-                  fontWeight: isActive ? '700' : '600',
-                },
-              ]}
-            >
-              {p.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+    <View style={styles.containerWrapper}>
+      <View style={styles.container}>
+        {PERIODS.map((p, index) => {
+          const isActive = p.value === period;
+          return (
+            <React.Fragment key={p.value}>
+              <Pressable
+                onPress={() => onPeriodChange(p.value)}
+                style={[
+                  styles.tab,
+                  isActive && styles.activeTab
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    {
+                      color: isActive ? '#FFFFFF' : 'rgba(255, 255, 255, 0.7)',
+                      fontWeight: isActive ? '700' : '500',
+                    },
+                  ]}
+                >
+                  {p.label}
+                </Text>
+                {isActive && (
+                  <View style={styles.activeGlowLine} />
+                )}
+              </Pressable>
+              
+              {/* Vertical divider between tabs, but not after the last one */}
+              {index < PERIODS.length - 1 && (
+                <View style={styles.divider} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  containerWrapper: {
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
-    gap: spacing.sm,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.1)', // Subtle glass back
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    overflow: 'hidden',
+  },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 20,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    position: 'relative',
+  },
+  activeTab: {
+    backgroundColor: 'rgba(0, 229, 255, 0.15)', // Glowing cyan background tint
   },
   tabText: {
     fontSize: 13,
   },
+  divider: {
+    width: 1,
+    height: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  activeGlowLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: '#00E5FF',
+    shadowColor: '#00E5FF',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4,
+  }
 });

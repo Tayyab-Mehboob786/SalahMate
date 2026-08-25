@@ -46,7 +46,7 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
               Next Prayer
             </Text>
           </View>
-          <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '800', marginTop: 4 }}>
+          <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '800', marginTop: 4, lineHeight: 24, paddingVertical: 2 }}>
             {nextPrayerName} • {nextPrayerTime}
           </Text>
         </View>

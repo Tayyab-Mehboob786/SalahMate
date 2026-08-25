@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { GlassCard } from '@/components/glass/GlassCard';
-import { spacing, type SalahMateTheme } from '@/theme';
+import { View, StyleSheet, Text } from 'react-native';
+import { spacing } from '@/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface SummaryCardsProps {
   overallCompletion: number;
@@ -11,33 +10,59 @@ interface SummaryCardsProps {
 }
 
 export function SummaryCards({ overallCompletion, currentStreak, perfectDays }: SummaryCardsProps) {
-  const theme = useTheme<SalahMateTheme>();
-
+  
   return (
     <View style={styles.container}>
-      <GlassCard borderRadius={16} style={styles.card}>
-        <View style={styles.content}>
-          <Text style={styles.icon}>🎯</Text>
-          <Text style={[styles.value, { color: theme.colors.onSurface }]}>{overallCompletion}%</Text>
-          <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Completion</Text>
+      {/* Completion Card */}
+      <View style={styles.cardWrapper}>
+        <View style={styles.cardInner}>
+          <View style={[styles.iconWrapper, { shadowColor: '#FF3B30' }]}>
+            <Text style={styles.icon}>🎯</Text>
+            <View style={[styles.iconGlow, { backgroundColor: '#FF3B30' }]} />
+          </View>
+          <Text style={styles.valueText}>{overallCompletion}%</Text>
+          <Text style={styles.labelText}>completion</Text>
         </View>
-      </GlassCard>
+        <LinearGradient 
+          colors={['transparent', 'rgba(0, 229, 255, 0.5)']} 
+          style={styles.cardBottomGlow} 
+        />
+        <View style={styles.cardBottomLine} />
+      </View>
 
-      <GlassCard borderRadius={16} style={styles.card}>
-        <View style={styles.content}>
-          <Text style={styles.icon}>🔥</Text>
-          <Text style={[styles.value, { color: theme.colors.onSurface }]}>{currentStreak}</Text>
-          <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Streak</Text>
+      {/* Streak Card */}
+      <View style={styles.cardWrapper}>
+        <View style={styles.cardInner}>
+          <View style={[styles.iconWrapper, { shadowColor: '#FF9500' }]}>
+            <Text style={styles.icon}>🔥</Text>
+            <View style={[styles.iconGlow, { backgroundColor: '#FF9500' }]} />
+          </View>
+          <Text style={styles.valueText}>{currentStreak} Days</Text>
+          <Text style={styles.labelText}>streak</Text>
         </View>
-      </GlassCard>
+        <LinearGradient 
+          colors={['transparent', 'rgba(0, 229, 255, 0.5)']} 
+          style={styles.cardBottomGlow} 
+        />
+        <View style={styles.cardBottomLine} />
+      </View>
 
-      <GlassCard borderRadius={16} style={styles.card}>
-        <View style={styles.content}>
-          <Text style={styles.icon}>✨</Text>
-          <Text style={[styles.value, { color: theme.colors.onSurface }]}>{perfectDays}</Text>
-          <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Perfect</Text>
+      {/* Perfect Card */}
+      <View style={styles.cardWrapper}>
+        <View style={styles.cardInner}>
+          <View style={[styles.iconWrapper, { shadowColor: '#FFCC00' }]}>
+            <Text style={styles.icon}>✨</Text>
+            <View style={[styles.iconGlow, { backgroundColor: '#FFCC00' }]} />
+          </View>
+          <Text style={styles.valueText}>{perfectDays} Days</Text>
+          <Text style={styles.labelText}>perfect</Text>
         </View>
-      </GlassCard>
+        <LinearGradient 
+          colors={['transparent', 'rgba(0, 229, 255, 0.5)']} 
+          style={styles.cardBottomGlow} 
+        />
+        <View style={styles.cardBottomLine} />
+      </View>
     </View>
   );
 }
@@ -49,24 +74,77 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  card: {
+  cardWrapper: {
     flex: 1,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    overflow: 'hidden',
+    position: 'relative',
+    height: 120,
   },
-  content: {
-    paddingVertical: spacing.md,
+  cardInner: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 12,
+    zIndex: 2,
+  },
+  iconWrapper: {
+    position: 'relative',
+    marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 36,
+    height: 36,
   },
   icon: {
     fontSize: 24,
-    marginBottom: 4,
+    zIndex: 2,
   },
-  value: {
-    fontSize: 20,
+  iconGlow: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    opacity: 0.3,
+    transform: [{ scale: 1.5 }],
+    zIndex: 1,
+  },
+  valueText: {
+    fontSize: 16,
     fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 2,
   },
-  label: {
+  labelText: {
     fontSize: 12,
-    marginTop: 2,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '500',
   },
+  cardBottomGlow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+    zIndex: 1,
+  },
+  cardBottomLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 20,
+    right: 20,
+    height: 3,
+    backgroundColor: '#00E5FF',
+    shadowColor: '#00E5FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
+    zIndex: 3,
+  }
 });

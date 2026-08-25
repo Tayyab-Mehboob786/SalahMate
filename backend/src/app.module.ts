@@ -11,6 +11,7 @@ import { PrayersModule } from './prayers/prayers.module';
 import { PrayerTimesModule } from './prayer-times/prayer-times.module';
 import { AiModule } from './ai/ai.module';
 import { QuranModule } from './quran/quran.module';
+import { GoalsModule } from './goals/goals.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { QuranModule } from './quran/quran.module';
     PrayerTimesModule,
     AiModule,
     QuranModule,
+    GoalsModule,
   ],
   controllers: [],
   providers: [],

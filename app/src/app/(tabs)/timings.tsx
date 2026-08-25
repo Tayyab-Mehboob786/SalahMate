@@ -1,27 +1,25 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, Pressable, RefreshControl } from 'react-native';
+import { StyleSheet, View, Pressable, RefreshControl, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AppIcon } from '@/components';
+import { AppIcon, ScreenContainer, LocationPickerBottomSheet, PrayerSkeleton } from '@/components';
 import { Text, useTheme } from 'react-native-paper';
-import { GlassButton, GlassCard, GlassHeader, ScreenContainer, LocationPickerBottomSheet, PrayerSkeleton } from '@/components';
 import { useLocation } from '@/context/LocationContext';
 import { useSharedPrayerTimes } from '@/context';
 import { useLivePrayerTimings, UIPrayerTiming } from '@/hooks/prayer/useLivePrayerTimings';
-import { spacing, shadows } from '@/theme';
+import { spacing } from '@/theme';
 import type { SalahMateTheme } from '@/theme';
 import Animated, { FadeIn, FadeInUp, Layout } from 'react-native-reanimated';
 
 // ----------------------------------------------------------------------
-// Memoized Hero Card
+// Memoized Hero Card Section
 // ----------------------------------------------------------------------
-const HeroCard = React.memo(({ 
+const HeroSection = React.memo(({ 
   locationText, 
   gregorianDate, 
   hijriDate, 
   currentPrayer, 
   nextPrayer, 
   countdown,
-  theme 
 }: { 
   locationText: string;
   gregorianDate: string;
@@ -29,68 +27,41 @@ const HeroCard = React.memo(({
   currentPrayer: UIPrayerTiming | null;
   nextPrayer: UIPrayerTiming | null;
   countdown: string;
-  theme: SalahMateTheme;
 }) => {
   return (
-    <Animated.View entering={FadeIn.duration(400)}>
-      <GlassCard borderRadius={24} style={styles.heroCard}>
-        {/* Top Header */}
-        <View style={styles.heroHeader}>
-          <View style={styles.heroLocation}>
-            <AppIcon name="map-marker" size="sm" variant="error" style={{ marginRight: 4 }} />
-            <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600' }} numberOfLines={1}>
-              {locationText}
-            </Text>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-              {gregorianDate}
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              {hijriDate}
-            </Text>
-          </View>
+    <Animated.View entering={FadeIn.duration(400)} style={styles.heroSection}>
+      {/* Top Location & Date */}
+      <View style={styles.heroHeader}>
+        <Text style={styles.heroLocationText} numberOfLines={1}>
+          {locationText}
+        </Text>
+        <Text style={styles.heroDateText}>
+          {gregorianDate} • {hijriDate}
+        </Text>
+      </View>
+
+      <View style={styles.heroDivider} />
+
+      {/* Current & Next Prayer Columns */}
+      <View style={styles.heroBody}>
+        {/* Current Prayer */}
+        <View style={styles.heroCol}>
+          <AppIcon name="human-handsup" size={24} color="#FFFFFF" style={{ marginBottom: 6 }} />
+          <Text style={styles.heroLabelText}>CURRENT PRAYER</Text>
+          <Text style={styles.heroPrayerName}>{currentPrayer ? currentPrayer.name : 'None'}</Text>
+          <Text style={styles.heroPrayerTime}>{currentPrayer ? currentPrayer.time : '--:--'}</Text>
         </View>
 
-        <View style={[styles.heroDivider, { backgroundColor: theme.colors.border }]} />
+        <View style={styles.heroVerticalDivider} />
 
-        {/* Current & Next Prayer */}
-        <View style={styles.heroBody}>
-          <View style={styles.heroCol}>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Current Prayer
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-              <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '800' }}>
-                {currentPrayer ? currentPrayer.name : 'None'}
-              </Text>
-            </View>
-            <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700', marginTop: 2 }}>
-              {currentPrayer ? currentPrayer.time : '--:--'}
-            </Text>
-          </View>
-
-          <View style={[styles.heroVerticalDivider, { backgroundColor: theme.colors.border }]} />
-
-          <View style={styles.heroCol}>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Next Prayer
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-              <AppIcon name={nextPrayer?.icon as any || 'clock-outline'} size={18} color={theme.colors.onSurface} style={{ marginRight: 6 }} />
-              <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '800' }}>
-                {nextPrayer ? nextPrayer.name : '--'}
-              </Text>
-            </View>
-            <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '600', marginTop: 4 }}>
-              Starts in
-            </Text>
-            <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-              {countdown}
-            </Text>
-          </View>
+        {/* Next Prayer */}
+        <View style={styles.heroCol}>
+          <AppIcon name="mosque" size={24} color="#FFFFFF" style={{ marginBottom: 6 }} />
+          <Text style={styles.heroLabelText}>NEXT PRAYER</Text>
+          <Text style={styles.heroPrayerName}>{nextPrayer ? nextPrayer.name : '--'}</Text>
+          <Text style={styles.heroCountdownText}>Starts in {countdown}</Text>
         </View>
-      </GlassCard>
+      </View>
     </Animated.View>
   );
 });
@@ -101,76 +72,71 @@ const HeroCard = React.memo(({
 const PrayerListItem = React.memo(({ 
   prayer, 
   index, 
-  theme 
 }: { 
   prayer: UIPrayerTiming; 
   index: number; 
-  theme: SalahMateTheme 
 }) => {
   const isCurrent = prayer.isCurrent;
-  const isCompleted = prayer.status === 'COMPLETED';
-  const isMissed = prayer.status === 'MISSED';
+  
+  const renderStatusBadge = () => {
+    if (isCurrent) {
+      return (
+        <View style={styles.currentBadge}>
+          <Text style={styles.currentBadgeText}>CURRENT</Text>
+        </View>
+      );
+    }
+    
+    if (prayer.status === 'COMPLETED') {
+      return (
+        <View style={styles.pendingBadgeRow}>
+          <AppIcon name="check-circle" size={16} color="#2ECC71" style={{ marginRight: 6 }} />
+          <Text style={[styles.pendingBadgeText, { color: '#2ECC71' }]}>Completed</Text>
+        </View>
+      );
+    }
+
+    if (prayer.status === 'QADA') {
+      return (
+        <View style={styles.pendingBadgeRow}>
+          <AppIcon name="clock-outline" size={16} color="#F1C40F" style={{ marginRight: 6 }} />
+          <Text style={[styles.pendingBadgeText, { color: '#F1C40F' }]}>Qaza</Text>
+        </View>
+      );
+    }
+
+    if (prayer.status === 'MISSED') {
+      return (
+        <View style={styles.pendingBadgeRow}>
+          <AppIcon name="close-circle" size={16} color="#E74C3C" style={{ marginRight: 6 }} />
+          <Text style={[styles.pendingBadgeText, { color: '#E74C3C' }]}>Missed</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.pendingBadgeRow}>
+        <View style={styles.pendingCircle} />
+        <Text style={styles.pendingBadgeText}>Pending</Text>
+      </View>
+    );
+  };
   
   return (
     <Animated.View 
       entering={FadeInUp.delay(index * 100).duration(300)} 
       layout={Layout.springify()}
     >
-      <View
-        style={[
-          styles.prayerCard,
-          { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border },
-          isCurrent && {
-            borderColor: theme.colors.primary,
-            backgroundColor: theme.colors.primary,
-            borderWidth: 2,
-            ...shadows.sm,
-            paddingVertical: spacing.lg,
-          }
-        ]}
-      >
+      <View style={[styles.prayerCard, isCurrent && styles.prayerCardCurrent]}>
         <View style={styles.prayerCardLeft}>
-          <View style={[styles.prayerIconBox, { backgroundColor: isCurrent ? theme.colors.onPrimary : theme.colors.surface }]}>
-            <AppIcon 
-              name={prayer.icon as any} 
-              size={20} 
-              color={isCurrent ? theme.colors.primary : theme.colors.iconSecondary} 
-            />
+          <View style={styles.prayerIconBox}>
+            <AppIcon name={prayer.icon as any} size={20} color="#FFFFFF" />
           </View>
-          <View>
-            <Text variant="titleMedium" style={{ color: isCurrent ? theme.colors.onPrimary : theme.colors.onSurface, fontWeight: '700' }}>
-              {prayer.name}
-            </Text>
-            {isCurrent && (
-              <View style={[styles.currentBadge, { backgroundColor: theme.colors.onPrimary }]}>
-                <Text style={[styles.currentBadgeText, { color: theme.colors.primary }]}>CURRENT</Text>
-              </View>
-            )}
-          </View>
+          <Text style={styles.prayerCardName}>{prayer.name}</Text>
         </View>
 
         <View style={styles.prayerCardRight}>
-          <Text variant="titleMedium" style={{ color: isCurrent ? theme.colors.onPrimary : theme.colors.onSurface, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-            {prayer.time}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-            {isCompleted ? (
-              <>
-                <AppIcon name="check-circle" size={14} color={isCurrent ? theme.colors.onPrimary : theme.colors.primary} style={{ marginRight: 4 }} />
-                <Text variant="labelSmall" style={{ color: isCurrent ? theme.colors.onPrimary : theme.colors.primary, fontWeight: '600' }}>Completed</Text>
-              </>
-            ) : isMissed ? (
-              <>
-                <AppIcon name="close-circle" size={14} color={isCurrent ? '#FFB4AB' : theme.colors.error} style={{ marginRight: 4 }} />
-                <Text variant="labelSmall" style={{ color: isCurrent ? '#FFB4AB' : theme.colors.error, fontWeight: '600' }}>Missed</Text>
-              </>
-            ) : (
-              <>
-                <AppIcon name="circle-outline" size={14} color={isCurrent ? 'rgba(255,255,255,0.7)' : theme.colors.onSurfaceVariant} style={{ marginRight: 4 }} />
-                <Text variant="labelSmall" style={{ color: isCurrent ? 'rgba(255,255,255,0.9)' : theme.colors.onSurfaceVariant }}>Pending</Text>
-              </>
-            )}
-          </View>
+          {renderStatusBadge()}
         </View>
       </View>
     </Animated.View>
@@ -210,85 +176,81 @@ export default function TimingsScreen() {
     <>
       <ScreenContainer 
         scrollable 
-        withGlassGradient 
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+        backgroundImage={require('../../../assets/backgrounds/timings-mosque.png')}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" />}
       >
+        {/* Custom Header */}
         <View style={styles.headerWrapper}>
-          <GlassHeader 
-            title="Prayer Timings" 
-            showBack 
-            rightSlot={
-              <Pressable onPress={() => router.push('/qibla')} style={({pressed}) => [pressed && {opacity: 0.7}]}>
-                <AppIcon name="compass-outline" size="md" variant="primary" />
-              </Pressable>
-            }
-          />
+          <Pressable 
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => router.replace('/')}
+          >
+            <AppIcon name="chevron-left" size={24} color="#FFFFFF" />
+          </Pressable>
+
+          <Text style={styles.headerTitle}>Prayer Timings</Text>
+
+          <Pressable 
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => router.push('/qibla')}
+          >
+            <AppIcon name="compass-outline" size={20} color="#FFFFFF" />
+          </Pressable>
         </View>
 
         <View style={styles.container}>
           {isLoading ? (
-            <View style={{ paddingHorizontal: spacing.lg }}>
+            <View style={{ paddingHorizontal: spacing.lg, marginTop: 20 }}>
               <PrayerSkeleton />
             </View>
           ) : isError || !data ? (
             <View style={styles.stateContainer}>
-              <AppIcon name="alert-circle-outline" size="xl" variant="error" />
-              <Text style={[styles.stateText, { color: theme.colors.onSurface }]}>Location unavailable</Text>
-              <Text style={[styles.stateSubText, { color: theme.colors.onSurfaceVariant }]}>
+              <AppIcon name="alert-circle-outline" size="xl" color="#FFFFFF" />
+              <Text style={styles.stateText}>Location unavailable</Text>
+              <Text style={styles.stateSubText}>
                 Please enable location services{'\n'}or choose a city manually.
               </Text>
-              <GlassButton label="Retry" onPress={onRefresh} variant="primary" style={{ marginTop: spacing.md }} />
+              <Pressable style={styles.retryBtn} onPress={onRefresh}>
+                <Text style={styles.retryBtnText}>Retry</Text>
+              </Pressable>
             </View>
           ) : (
             <View style={styles.content}>
               
-              {/* Hero Card */}
-              <HeroCard 
-                locationText={renderLocationText()}
-                gregorianDate={data.gregorianDate}
-                hijriDate={data.hijriDate}
-                currentPrayer={currentPrayer}
-                nextPrayer={nextPrayer}
-                countdown={countdown}
-                theme={theme}
-              />
-
-              {/* Timetable List */}
-              <View style={styles.listContainer}>
-                {prayers.map((prayer, index) => (
-                  <PrayerListItem key={prayer.name} prayer={prayer} index={index} theme={theme} />
-                ))}
-              </View>
-
-              {/* Settings / Location Buttons */}
-              <View style={styles.footerActions}>
-                <Pressable 
-                  onPress={() => setIsPickerVisible(true)}
-                  style={({ pressed }) => [
-                    styles.outlinedBtn,
-                    { borderColor: theme.colors.outline },
-                    pressed && { backgroundColor: theme.colors.surfaceVariant }
-                  ]}
-                >
-                  <AppIcon name="map-marker-outline" size="sm" color={theme.colors.onSurface} style={{ marginRight: 8 }} />
-                  <Text variant="labelLarge" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>Change Location</Text>
-                </Pressable>
-
-                <Pressable 
-                  onPress={() => router.push('/settings')}
-                  style={({ pressed }) => [
-                    styles.outlinedBtn,
-                    { borderColor: theme.colors.outline, marginTop: spacing.sm },
-                    pressed && { backgroundColor: theme.colors.surfaceVariant }
-                  ]}
-                >
-                  <AppIcon name="cog-outline" size="sm" color={theme.colors.onSurface} style={{ marginRight: 8 }} />
-                  <Text variant="labelLarge" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>Calculation Method</Text>
-                </Pressable>
+              {/* Massive Glass Wrapper */}
+              <View style={styles.unifiedGlassWrapper}>
                 
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: spacing.md }}>
-                  Method: {data.calculationMethod}
-                </Text>
+                {/* Hero Section */}
+                <HeroSection 
+                  locationText={renderLocationText()}
+                  gregorianDate={data.gregorianDate}
+                  hijriDate={data.hijriDate}
+                  currentPrayer={currentPrayer}
+                  nextPrayer={nextPrayer}
+                  countdown={countdown}
+                />
+
+                {/* Timetable List */}
+                <View style={styles.listContainer}>
+                  {prayers.map((prayer, index) => (
+                    <PrayerListItem key={prayer.name} prayer={prayer} index={index} />
+                  ))}
+                </View>
+
+                {/* Settings / Location Buttons */}
+                <View style={styles.footerActionsRow}>
+                  <Pressable 
+                    onPress={() => setIsPickerVisible(true)}
+                    style={({ pressed }) => [
+                      styles.footerBtn,
+                      pressed && { backgroundColor: 'rgba(255,255,255,0.15)' }
+                    ]}
+                  >
+                    <AppIcon name="map-marker-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                    <Text style={styles.footerBtnText} numberOfLines={1}>Change Location</Text>
+                  </Pressable>
+                </View>
+
               </View>
 
               {/* Padding for bottom nav */}
@@ -304,121 +266,241 @@ export default function TimingsScreen() {
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  headerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 22,
+    lineHeight: 30,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    paddingVertical: 4,
   },
   container: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingHorizontal: 16,
   },
   stateContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 100,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: 24,
   },
   stateText: {
-    marginTop: spacing.md,
+    marginTop: 16,
     fontSize: 18,
     fontWeight: '600',
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   stateSubText: {
-    marginTop: spacing.xs,
+    marginTop: 8,
     fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
   },
-  // Hero Card
-  heroCard: {
-    padding: spacing.lg,
-    marginBottom: spacing.xl,
+  retryBtn: {
+    marginTop: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  retryBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  // Unified Wrapper
+  unifiedGlassWrapper: {
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    padding: 16,
+    marginBottom: 20,
+  },
+  // Hero Section
+  heroSection: {
+    marginBottom: 20,
   },
   heroHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  heroLocation: {
-    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    paddingRight: spacing.sm,
+    marginBottom: 16,
+  },
+  heroLocationText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  heroDateText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
   },
   heroDivider: {
     height: 1,
-    width: '100%',
-    marginVertical: spacing.md,
-    opacity: 0.5,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginBottom: 20,
+    marginHorizontal: 8,
   },
   heroBody: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   heroCol: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroVerticalDivider: {
     width: 1,
     height: '100%',
-    marginHorizontal: spacing.md,
-    opacity: 0.5,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginHorizontal: 12,
+  },
+  heroLabelText: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  heroPrayerName: {
+    fontSize: 28,
+    lineHeight: 36,
+    paddingVertical: 2,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  heroPrayerTime: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.9)',
+  },
+  heroCountdownText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.9)',
   },
   // List Container
   listContainer: {
-    gap: spacing.sm,
+    gap: 8,
+    marginBottom: 20,
   },
   prayerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  prayerCardCurrent: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderColor: '#3498db',
+    borderWidth: 1.5,
   },
   prayerCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   prayerIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginRight: 10,
+  },
+  prayerCardName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  prayerCardRight: {
+    width: 110,
+    alignItems: 'flex-end',
+  },
+  pendingBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pendingCircle: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.7)',
+    marginRight: 6,
+  },
+  pendingBadgeText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
   },
   currentBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginTop: 2,
+    backgroundColor: 'rgba(52, 152, 219, 0.5)',
+    borderColor: '#3498db',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   currentBadgeText: {
-    color: '#FFF',
-    fontSize: 9,
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  prayerCardRight: {
-    alignItems: 'flex-end',
-  },
   // Footer
-  footerActions: {
-    marginTop: spacing.xl,
+  footerActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
-  outlinedBtn: {
+  footerBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  footerBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 13,
   },
 });

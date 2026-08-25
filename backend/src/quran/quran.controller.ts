@@ -16,19 +16,35 @@ export class QuranController {
   }
 
   @Get('page/:number')
-  async getPage(@Param('number', ParseIntPipe) pageNumber: number) {
+  async getPage(
+    @Param('number', ParseIntPipe) pageNumber: number,
+    @Query('translation') translation?: string,
+    @Query('reciter', new ParseIntPipe({ optional: true })) reciterId?: number
+  ) {
     if (pageNumber < 1 || pageNumber > 604) {
       throw new BadRequestException('Page number must be between 1 and 604');
     }
-    return this.quranService.readerService.getPage(pageNumber);
+    if (translation && translation !== 'none' && !['en', 'ur'].includes(translation)) {
+      throw new BadRequestException('Unsupported translation language');
+    }
+    const safeTranslation = translation === 'none' ? undefined : translation;
+    return this.quranService.readerService.getPage(pageNumber, safeTranslation, reciterId);
   }
 
   @Get('juz/:number')
-  async getJuz(@Param('number', ParseIntPipe) juzNumber: number) {
+  async getJuz(
+    @Param('number', ParseIntPipe) juzNumber: number,
+    @Query('translation') translation?: string,
+    @Query('reciter', new ParseIntPipe({ optional: true })) reciterId?: number
+  ) {
     if (juzNumber < 1 || juzNumber > 30) {
       throw new BadRequestException('Juz number must be between 1 and 30');
     }
-    return this.quranService.readerService.getJuz(juzNumber);
+    if (translation && translation !== 'none' && !['en', 'ur'].includes(translation)) {
+      throw new BadRequestException('Unsupported translation language');
+    }
+    const safeTranslation = translation === 'none' ? undefined : translation;
+    return this.quranService.readerService.getJuz(juzNumber, safeTranslation, reciterId);
   }
 
   @Get('search')

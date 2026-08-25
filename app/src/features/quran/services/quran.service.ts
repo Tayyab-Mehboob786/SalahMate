@@ -12,13 +12,17 @@ export const quranApiService = {
     return response.data;
   },
 
-  getPage: async (pageNumber: number): Promise<Page> => {
-    const response = await apiClient.get<Page>(`/quran/page/${pageNumber}`);
+  getPage: async (pageNumber: number, translation?: string): Promise<Page> => {
+    const response = await apiClient.get<Page>(`/quran/page/${pageNumber}`, {
+      params: { translation },
+    });
     return response.data;
   },
 
-  getJuz: async (juzNumber: number): Promise<Juz> => {
-    const response = await apiClient.get<Juz>(`/quran/juz/${juzNumber}`);
+  getJuz: async (juzNumber: number, translation?: string): Promise<Juz> => {
+    const response = await apiClient.get<Juz>(`/quran/juz/${juzNumber}`, {
+      params: { translation },
+    });
     return response.data;
   },
 

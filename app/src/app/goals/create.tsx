@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, Pressable } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ScreenContainer, GlassHeader, GlassButton, GlassCard } from '@/components';
+import { ScreenContainer, GlassButton, AppIcon } from '@/components';
+import { BlurView } from 'expo-blur';
 import { GoalTemplateCard, GoalTemplate } from '@/components/goals/GoalTemplateCard';
 import { useGoals } from '@/context/GoalsContext';
 import { spacing } from '@/theme';
@@ -25,6 +26,7 @@ const TEMPLATES: GoalTemplate[] = [
     title: 'Never Miss Fajr',
     description: 'Pray Fajr on time for 40 days',
     category: 'Prayer',
+    prayerTarget: 'FAJR',
     icon: 'weather-sunset-up',
     defaultTotalUnits: 40,
     defaultUnitLabel: 'days',
@@ -79,16 +81,17 @@ export default function CreateGoalScreen() {
     setStep(2);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title || !totalUnits || !durationDays || !selectedTemplate) return;
 
     const startDate = new Date();
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + parseInt(durationDays, 10));
 
-    addGoal({
+    await addGoal({
       title,
       category: selectedTemplate.category,
+      prayerTarget: selectedTemplate.prayerTarget || null,
       startDate: startDate.toISOString(),
       targetDate: targetDate.toISOString(),
       totalUnits: parseInt(totalUnits, 10),
@@ -100,20 +103,33 @@ export default function CreateGoalScreen() {
   };
 
   return (
-    <ScreenContainer withGlassGradient>
-      <GlassHeader 
-        title={step === 1 ? "Choose a Template" : "Configure Goal"} 
-        showBack
-        onBackPress={() => {
-          if (step === 2) setStep(1);
-          else router.back();
-        }}
-      />
+    <ScreenContainer 
+      backgroundImage={require('../../../assets/backgrounds/asma-mosque.png')} 
+      withGlassGradient={false}
+      style={{ backgroundColor: 'transparent' }}
+    >
+      <View style={styles.overlay} />
+      
+      <View style={styles.header}>
+        <Pressable 
+          onPress={() => {
+            if (step === 2) setStep(1);
+            else router.back();
+          }} 
+          style={styles.iconBtn}
+        >
+          <AppIcon name="chevron-left" size={28} color="#FFFFFF" />
+        </Pressable>
+        <View style={styles.headerTitles}>
+          <Text style={styles.headerTitle}>{step === 1 ? "Choose a Template" : "Configure Goal"}</Text>
+        </View>
+        <View style={styles.iconBtn} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {step === 1 ? (
           <>
-            <Text variant="bodyLarge" style={[styles.introText, { color: theme.colors.onSurfaceVariant }]}>
+            <Text variant="bodyLarge" style={[styles.introText, { color: '#CBD5E1' }]}>
               Select a predefined template or create a custom goal to start your spiritual journey.
             </Text>
             {TEMPLATES.map(template => (
@@ -126,60 +142,61 @@ export default function CreateGoalScreen() {
           </>
         ) : (
           <View style={styles.formContainer}>
-            <GlassCard borderRadius={16} style={styles.formCard}>
-              <Text variant="labelLarge" style={[styles.inputLabel, { color: theme.colors.onSurface }]}>Goal Title</Text>
+            <BlurView intensity={25} tint="light" style={styles.formCard}>
+              <Text variant="labelLarge" style={[styles.inputLabel, { color: '#FFFFFF' }]}>Goal Title</Text>
               <TextInput
-                style={[styles.input, { color: theme.colors.onSurface, borderColor: theme.colors.border }]}
+                style={[styles.input, { color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)' }]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g. Complete Quran"
-                placeholderTextColor={theme.colors.onSurfaceVariant}
+                placeholderTextColor="rgba(255,255,255,0.5)"
               />
 
-              <Text variant="labelLarge" style={[styles.inputLabel, { color: theme.colors.onSurface }]}>Total Units Needed</Text>
+              <Text variant="labelLarge" style={[styles.inputLabel, { color: '#FFFFFF' }]}>Total Units Needed</Text>
               <TextInput
-                style={[styles.input, { color: theme.colors.onSurface, borderColor: theme.colors.border }]}
+                style={[styles.input, { color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)' }]}
                 value={totalUnits}
                 onChangeText={setTotalUnits}
                 keyboardType="numeric"
                 placeholder="e.g. 604"
-                placeholderTextColor={theme.colors.onSurfaceVariant}
+                placeholderTextColor="rgba(255,255,255,0.5)"
               />
 
-              <Text variant="labelLarge" style={[styles.inputLabel, { color: theme.colors.onSurface }]}>Unit Label (e.g. pages, days)</Text>
+              <Text variant="labelLarge" style={[styles.inputLabel, { color: '#FFFFFF' }]}>Unit Label (e.g. pages, days)</Text>
               <TextInput
-                style={[styles.input, { color: theme.colors.onSurface, borderColor: theme.colors.border }]}
+                style={[styles.input, { color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)' }]}
                 value={unitLabel}
                 onChangeText={setUnitLabel}
                 placeholder="e.g. pages"
-                placeholderTextColor={theme.colors.onSurfaceVariant}
+                placeholderTextColor="rgba(255,255,255,0.5)"
               />
 
-              <Text variant="labelLarge" style={[styles.inputLabel, { color: theme.colors.onSurface }]}>Duration (Days)</Text>
+              <Text variant="labelLarge" style={[styles.inputLabel, { color: '#FFFFFF' }]}>Duration (Days)</Text>
               <TextInput
-                style={[styles.input, { color: theme.colors.onSurface, borderColor: theme.colors.border }]}
+                style={[styles.input, { color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)' }]}
                 value={durationDays}
                 onChangeText={setDurationDays}
                 keyboardType="numeric"
                 placeholder="e.g. 30"
-                placeholderTextColor={theme.colors.onSurfaceVariant}
+                placeholderTextColor="rgba(255,255,255,0.5)"
               />
-            </GlassCard>
+            </BlurView>
 
-            <GlassCard borderRadius={16} style={styles.formCard}>
+            <BlurView intensity={25} tint="light" style={styles.formCard}>
               <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="bell-ring-outline" size={24} color={theme.colors.primary} />
-                <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginLeft: spacing.sm, fontWeight: '700' }}>
+                <MaterialCommunityIcons name="bell-ring-outline" size={24} color="#FFFFFF" />
+                <Text variant="titleMedium" style={{ color: '#FFFFFF', marginLeft: spacing.sm, fontWeight: '700' }}>
                   Reminders
                 </Text>
               </View>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: spacing.sm }}>
+              <Text variant="bodySmall" style={{ color: '#CBD5E1', marginTop: spacing.sm }}>
                 Placeholder: AI-driven notifications and daily reminders will be integrated here in future phases. Currently defaults to 09:00 AM daily.
               </Text>
-            </GlassCard>
+            </BlurView>
 
             <GlassButton 
               label="Start Journey" 
+              variant="white"
               onPress={handleSave} 
               disabled={!title || !totalUnits || !durationDays}
               style={{ marginTop: spacing.xl }}
@@ -192,6 +209,30 @@ export default function CreateGoalScreen() {
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(25, 20, 15, 0.40)', 
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 16,
+  },
+  iconBtn: {
+    width: 44, height: 44,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerTitles: {
+    alignItems: 'center',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 20,
+  },
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -207,6 +248,11 @@ const styles = StyleSheet.create({
   formCard: {
     marginBottom: spacing.lg,
     padding: spacing.md,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    overflow: 'hidden',
   },
   inputLabel: {
     fontWeight: '600',

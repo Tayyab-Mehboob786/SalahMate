@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Alert, ActivityIndicator, Pressable, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from 'react-native-paper';
-import { ScreenContainer, GlassHeader, Card } from '@/components';
-import { ProfileInput, ReadOnlyField, SaveButton, EditableAvatar } from '@/components/profile';
+import { Text } from 'react-native-paper';
+import { ScreenContainer, AppIcon } from '@/components';
 import { spacing } from '@/theme';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { usersApi } from '@/api';
+import { BlurView } from 'expo-blur';
+import { useAvatarUpload } from '@/hooks/profile/useAvatarUpload';
+import { API_BASE_URL } from '@/constants/api';
+import { Image } from 'react-native';
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
-  const theme = useTheme();
 
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [country, setCountry] = useState(user?.country || '');
@@ -41,6 +43,13 @@ export default function EditProfileScreen() {
     .join('')
     .slice(0, 2)
     .toUpperCase();
+
+  const handleAvatarUpdated = async (url: string) => {
+    setAvatarUrl(url);
+    await refreshUser();
+  };
+
+  const { pickImage, loading: isUploading } = useAvatarUpload(handleAvatarUpdated);
 
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
@@ -76,102 +85,303 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleAvatarUpdated = async (url: string) => {
-    setAvatarUrl(url);
-    await refreshUser();
-  };
-
   if (!user) {
     return (
-      <ScreenContainer scrollable withPadding>
-        <GlassHeader title="Edit Profile" showBack />
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+      <ScreenContainer scrollable={false} backgroundImage={require('../../../assets/backgrounds/profile-mosque.png')}>
+        <View style={styles.customHeader}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <AppIcon name="arrow-left" size={24} color="#FFFFFF" />
+          </Pressable>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <View style={{ width: 44 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFFFFF" />
         </View>
       </ScreenContainer>
     );
   }
 
-  return (
-    <ScreenContainer scrollable withPadding>
-      <GlassHeader title="Edit Profile" showBack />
+  const source = avatarUrl 
+    ? { uri: avatarUrl.startsWith('http') ? avatarUrl : `${API_BASE_URL}${avatarUrl}` } 
+    : undefined;
 
-      <View style={styles.container}>
+  const GlassInput = ({ label, value, onChangeText, icon, error, editable = true }: any) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <View style={[styles.inputWrapper, error && styles.inputError]}>
+        <AppIcon name={icon} size={20} color={editable ? "#FFFFFF" : "rgba(255,255,255,0.5)"} style={styles.inputIcon} />
+        <TextInput
+          style={[styles.textInput, !editable && { color: "rgba(255,255,255,0.5)" }]}
+          value={value}
+          onChangeText={onChangeText}
+          placeholderTextColor="rgba(255, 255, 255, 0.4)"
+          editable={editable}
+        />
+      </View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </View>
+  );
+
+  return (
+    <ScreenContainer scrollable={false} backgroundImage={require('../../../assets/backgrounds/profile-mosque.png')}>
+      <View style={styles.customHeader}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <AppIcon name="arrow-left" size={24} color="#FFFFFF" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <View style={{ width: 44 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={{ height: 24 }} />
+
+        {/* Editable Avatar Section */}
         <View style={styles.avatarSection}>
-          <EditableAvatar 
-            initials={initials || 'U'} 
-            avatarUrl={avatarUrl} 
-            onAvatarUpdated={handleAvatarUpdated} 
-            size={100} 
-          />
+          <Pressable onPress={pickImage} disabled={isUploading || isSaving} style={styles.avatarPressable}>
+            <View style={[styles.avatarContainer, (isUploading || isSaving) && { opacity: 0.5 }]}>
+              {source ? (
+                <Image source={source} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarText}>{initials}</Text>
+              )}
+            </View>
+            <View style={styles.editBadge}>
+              <AppIcon name="camera" size={16} color="#FFFFFF" />
+            </View>
+            {isUploading && (
+              <View style={styles.avatarLoadingOverlay}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              </View>
+            )}
+          </Pressable>
         </View>
 
-        <Card mode="elevated" elevation={1} style={styles.card}>
-          <View style={styles.cardContent}>
-            <ProfileInput
+        {/* Form Container */}
+        <View style={styles.formContainerWrapper}>
+          <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+          <View style={styles.formContainer}>
+            <GlassInput
               label="Full Name"
               value={fullName}
               onChangeText={setFullName}
               error={errors.fullName}
-              icon="account-outline"
+              icon="account-circle"
             />
-            <ProfileInput
+            <View style={styles.divider} />
+            <GlassInput
               label="Country"
               value={country}
               onChangeText={setCountry}
               error={errors.country}
-              icon="earth"
+              icon="web"
             />
-            <ProfileInput
+            <View style={styles.divider} />
+            <GlassInput
               label="City"
               value={city}
               onChangeText={setCity}
               error={errors.city}
-              icon="city-variant-outline"
+              icon="city-variant"
             />
-            <ProfileInput
+            <View style={styles.divider} />
+            <GlassInput
               label="Timezone"
               value={timezone}
               onChangeText={setTimezone}
               error={errors.timezone}
-              icon="clock-outline"
+              icon="clock"
             />
           </View>
-        </Card>
-
-        <Card mode="elevated" elevation={1} style={styles.card}>
-          <View style={styles.cardContent}>
-            <ReadOnlyField label="Email Address" value={email} icon="email-outline" />
-            <ReadOnlyField label="Verification Status" value={verified ? 'Verified' : 'Unverified'} icon={verified ? 'check-decagram' : 'alert-circle-outline'} />
-          </View>
-        </Card>
-
-        <View style={styles.buttonContainer}>
-          <SaveButton onPress={handleSave} loading={isSaving} />
         </View>
-      </View>
+
+        <View style={styles.formContainerWrapper}>
+          <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+          <View style={styles.formContainer}>
+            <GlassInput
+              label="Email Address"
+              value={email}
+              icon="email"
+              editable={false}
+            />
+            <View style={styles.divider} />
+            <GlassInput
+              label="Verification Status"
+              value={verified ? 'Verified' : 'Unverified'}
+              icon={verified ? 'check-decagram' : 'alert-circle'}
+              editable={false}
+            />
+          </View>
+        </View>
+
+        {/* Save Button */}
+        <Pressable 
+          style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.8 }, isSaving && { opacity: 0.6 }]}
+          onPress={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <>
+              <AppIcon name="content-save-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text style={styles.saveBtnText}>Save Changes</Text>
+            </>
+          )}
+        </Pressable>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
-    paddingBottom: spacing.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    alignItems: 'center',
   },
   avatarSection: {
     alignItems: 'center',
-    marginVertical: spacing.lg,
+    marginBottom: 32,
+    width: '100%',
   },
-  card: {
-    marginBottom: spacing.md,
+  avatarPressable: {
+    position: 'relative',
   },
-  cardContent: {
-    padding: spacing.sm,
-    gap: spacing.xs,
+  avatarContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+    overflow: 'hidden',
   },
-  buttonContainer: {
-    marginTop: spacing.md,
-    marginBottom: spacing.xl,
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+  },
+  avatarText: {
+    fontSize: 48,
+    fontWeight: '400',
+    color: '#FFFFFF',
+    fontFamily: 'serif',
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#0F5B66',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.8)',
+  },
+  avatarLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 60,
+  },
+  formContainerWrapper: {
+    width: '100%',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    marginBottom: 24,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  formContainer: {
+    paddingVertical: 12,
+  },
+  inputContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '400',
+    marginBottom: 6,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  inputError: {
+    borderBottomColor: '#FF5252',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+    height: '100%',
+  },
+  errorText: {
+    color: '#FF5252',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    marginHorizontal: 20,
+    marginVertical: 4,
+  },
+  saveBtn: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0F5B66', // Dark cyan
+    paddingVertical: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 229, 255, 0.1)',
+  },
+  saveBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

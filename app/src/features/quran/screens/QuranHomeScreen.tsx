@@ -4,7 +4,7 @@ import { Text, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
-import { ScreenContainer, GlassCard, AppIcon } from '@/components';
+import { ScreenContainer, AppIcon } from '@/components';
 import { QuranAppBar } from '../components';
 import type { SalahMateTheme } from '@/theme';
 import { spacing } from '@/theme';
@@ -22,7 +22,10 @@ export const QuranHomeScreen = () => {
   };
 
   return (
-    <ScreenContainer scrollable={false}>
+    <ScreenContainer 
+      scrollable={false}
+      backgroundImage={require('../../../../assets/backgrounds/quran-background.png')}
+    >
       <QuranAppBar />
 
       <ScrollView
@@ -31,51 +34,54 @@ export const QuranHomeScreen = () => {
       >
         <Animated.View entering={FadeInUp.delay(100).duration(500)}>
           <View style={styles.heroContainer}>
-            <GlassCard contentStyle={styles.heroCard}>
-
+            <View style={styles.mainCard}>
               {/* Quran Logo */}
               <View style={styles.logoContainer}>
-                <AppIcon name="book-open-page-variant" size={64} color={theme.colors.primary} />
+                <AppIcon name="book-open-page-variant" size={48} color="#8EDCB8" />
               </View>
 
               {/* Title & Subtitle */}
-              <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
+              <Text variant="headlineSmall" style={styles.title}>
                 Begin Your Quran Journey
               </Text>
 
-              <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-                Start your Quran journey...
+              <Text variant="bodyMedium" style={styles.subtitle}>
+                Start your Quran journey today and connect with the divine words at your own pace.
               </Text>
 
               {/* Action Buttons */}
               <View style={styles.buttonsContainer}>
                 <Pressable
-                  style={[styles.primaryButton, { backgroundColor: theme.colors.primary }]}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    pressed && { opacity: 0.8 }
+                  ]}
                   onPress={handleStartReading}
-                  accessibilityLabel="Start Reading"
+                  accessibilityLabel="Browse Surahs"
                   accessibilityRole="button"
                 >
-                  <Text style={[styles.buttonText, { color: theme.colors.onPrimary }]}>
+                  <AppIcon name="format-list-bulleted" size={24} color="#111" />
+                  <Text style={styles.primaryButtonText}>
                     Browse Surahs
                   </Text>
                 </Pressable>
 
                 <Pressable
-                  style={[
+                  style={({ pressed }) => [
                     styles.secondaryButton,
-                    { borderColor: theme.colors.outline, backgroundColor: 'transparent' }
+                    pressed && { opacity: 0.8 }
                   ]}
                   onPress={handleBrowseJuz}
                   accessibilityLabel="Browse Juz"
                   accessibilityRole="button"
                 >
-                  <Text style={[styles.buttonText, { color: theme.colors.onSurface }]}>
+                  <AppIcon name="layers-outline" size={24} color="#FFF" />
+                  <Text style={styles.secondaryButtonText}>
                     Browse Juz
                   </Text>
                 </Pressable>
               </View>
-
-            </GlassCard>
+            </View>
           </View>
         </Animated.View>
 
@@ -96,64 +102,69 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginVertical: spacing.md,
   },
-  heroCard: {
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.md,
+  mainCard: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    padding: 24,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   logoContainer: {
-    marginBottom: spacing.md,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(39, 64, 52, 0.6)',
+    borderWidth: 1,
+    borderColor: '#43775A',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.lg,
   },
   title: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: spacing.xs,
+    color: '#FFFFFF',
+    marginBottom: spacing.sm,
   },
   subtitle: {
     textAlign: 'center',
-    marginBottom: spacing.lg,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: spacing.xl,
+    lineHeight: 22,
   },
   buttonsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.md,
     width: '100%',
+    gap: spacing.md,
   },
   primaryButton: {
-    flex: 1,
-    minWidth: 130,
-    maxWidth: 160,
-    minHeight: 44,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: 24,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#8EDCB8',
+    height: 56,
+    borderRadius: 16,
+    gap: spacing.sm,
+  },
+  primaryButtonText: {
+    color: '#111',
+    fontSize: 16,
+    fontWeight: '700',
   },
   secondaryButton: {
-    flex: 1,
-    minWidth: 120,
-    maxWidth: 145,
-    minHeight: 44,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: 24,
-    borderWidth: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    height: 56,
+    borderRadius: 16,
+    gap: spacing.sm,
   },
-  buttonText: {
-    fontWeight: 'bold',
-    fontSize: 15,
+  secondaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   }
 });

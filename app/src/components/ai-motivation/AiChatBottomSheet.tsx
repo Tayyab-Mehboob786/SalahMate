@@ -54,7 +54,7 @@ export const AiChatBottomSheet: React.FC<AiChatBottomSheetProps> = ({ visible, o
       visible={visible}
       onDismiss={onDismiss}
       title="SalahMate AI"
-      style={styles.bottomSheet} // Future readiness: can increase max height if needed
+      style={[styles.bottomSheet, { backgroundColor: 'rgba(0,0,0,0.75)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }]}
     >
       <ScrollView 
         ref={scrollViewRef}
